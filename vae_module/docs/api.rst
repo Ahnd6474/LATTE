@@ -12,3 +12,6 @@ API Reference
 
 .. automodule:: vae_module.exceptions
    :members:
+
+.. automodule:: vae_module.classes
+   :members:
