@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import ClassVar, List, Sequence
+from typing import List, Sequence
 
 import torch
 from torch.utils.data import Dataset
@@ -54,6 +55,9 @@ class Tokenizer:
             toks.append("<null_1>")
         toks.append("<mask>")
         return cls(toks)
+    vocab: Sequence[str]
+    pad_token: str = "<pad>"
+    bos_token: str = "<cls>"
 
     def __post_init__(self):
         self.idx_to_tok = list(self.vocab)
