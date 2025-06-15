@@ -4,10 +4,11 @@ ESMS-VAE is a simple implementation of a Variational Autoencoder (VAE) for prote
 
 ## Repository Contents
 
-- `esms-vae-structured.ipynb` – step-by-step training and evaluation workflow.
-- `gfp-cluster.ipynb` – example notebook for clustering latent vectors with `KMeans`.
-- `gfp-regressor.ipynb` – example notebook showing a regression task using latent features.
-- `vae_epoch380.pt` – pretrained model checkpoint produced by the training notebook.
+- `notebooks/esms-vae-structured.ipynb` – step-by-step training and evaluation workflow.
+- `notebooks/gfp-cluster.ipynb` – example notebook for clustering latent vectors with `KMeans`.
+- `notebooks/gfp-regressor.ipynb` – example notebook showing a regression task using latent features.
+- `models/vae_epoch380.pt` – pretrained model checkpoint produced by the training notebook.
+- `docs/ESMS_VAE.pdf` – short paper summarizing the method (also referenced below).
 
 ## Getting Started
 
@@ -15,7 +16,7 @@ ESMS-VAE is a simple implementation of a Variational Autoencoder (VAE) for prote
    ```bash
    pip install -r requirements.txt
    ```
-2. Open `esms-vae-structured.ipynb` in Jupyter and run the cells to download the data, train the VAE, and save a checkpoint.
+2. Open `notebooks/esms-vae-structured.ipynb` in Jupyter and run the cells to download the data, train the VAE, and save a checkpoint.
 3. To reuse the provided checkpoint, start from the **Load Saved VAE** section of the notebook.
 
 The notebooks expect access to example datasets from Kaggle (e.g. `uniref50_subsample.fasta`). Adjust the paths in the notebooks if your data is stored elsewhere.
@@ -29,7 +30,7 @@ After training, you can explore the latent space with the clustering and regress
 
 ## Pretrained Model
 
-The file `vae_epoch380.pt` contains weights trained for 380 epochs. Load this checkpoint in the main notebook to reconstruct sequences or generate new examples.
+The file `models/vae_epoch380.pt` contains weights trained for 380 epochs. Load this checkpoint in the main notebook to reconstruct sequences or generate new examples.
 
 ## Library Usage Example
 
@@ -39,7 +40,7 @@ The snippet below demonstrates how to load the pretrained checkpoint and encode 
 ```python
 from vae_module import Tokenizer, Config, load_vae, encode
 
-cfg = Config(model_path="vae_epoch380.pt")
+cfg = Config(model_path="models/vae_epoch380.pt")
 tokenizer = Tokenizer.from_esm()
 model = load_vae(cfg, vocab_size=len(tokenizer.vocab),
                  pad_idx=tokenizer.pad_idx, bos_idx=tokenizer.bos_idx)
@@ -55,12 +56,12 @@ The `vae_module/docs` directory includes a minimal Sphinx configuration. After
 installing the dependencies you can generate HTML documentation with:
 
 ```bash
-sphinx-build -b html vae_module/docs docs
+sphinx-build -b html vae_module/docs docs/html
 ```
 
 ## ESMS VAE Paper
 
-This repository includes the short paper [`ESMS_VAE.pdf`](ESMS_VAE.pdf) titled
+This repository includes the short paper [`ESMS_VAE.pdf`](docs/ESMS_VAE.pdf) titled
 "ESMS VAE: A Structure-Informed Variational Autoencoder for Protein
 Engineering". The paper proposes a custom loss that compares ESMS embeddings of
 the original and reconstructed sequences, encouraging the model to encode
@@ -71,14 +72,14 @@ L = λ(LMSE + LCOS) + α · LCE + β · LKL
 ```
 
 where `LCOS = 1 - COS(ESMS(origin), ESMS(recon))` and `LMSE =
-MSE(ESMS(origin), ESMS(recon))`【F:ESMS_VAE.pdf†L90-L101】.
+MSE(ESMS(origin), ESMS(recon))`【F:docs/ESMS_VAE.pdf†L90-L101】.
 
 Training on a UniRef50 subsample produced a model with a KL divergence close to
 0.05 at epoch 380 and a reconstruction accuracy of **97.17%** on the test set
-【F:ESMS_VAE.pdf†L135-L140】. The same model achieved excellent downstream
+【F:docs/ESMS_VAE.pdf†L135-L140】. The same model achieved excellent downstream
 performance on fluorescent proteins with a **0.987** 5-fold cross-validation
 accuracy and regression RMSE values of **2.7** and **3.8&nbsp;nm** for absorption
-and emission wavelengths, respectively【F:ESMS_VAE.pdf†L12-L23】.
+and emission wavelengths, respectively【F:docs/ESMS_VAE.pdf†L12-L23】.
 
 Refer to the PDF for figures, additional experiments, and references.
 
