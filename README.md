@@ -11,9 +11,9 @@ ESMS-VAE is a simple implementation of a Variational Autoencoder (VAE) for prote
 
 ## Getting Started
 
-1. Install dependencies:
+1. Install dependencies (or use `requirements.txt`):
    ```bash
-   pip install torch fair-esm biopython scikit-learn
+   pip install -r requirements.txt
    ```
 2. Open `esms-vae-structured.ipynb` in Jupyter and run the cells to download the data, train the VAE, and save a checkpoint.
 3. To reuse the provided checkpoint, start from the **Load Saved VAE** section of the notebook.
@@ -30,6 +30,33 @@ After training, you can explore the latent space with the clustering and regress
 ## Pretrained Model
 
 The file `vae_epoch380.pt` contains weights trained for 380 epochs. Load this checkpoint in the main notebook to reconstruct sequences or generate new examples.
+
+## Library Usage Example
+
+You can interact with the model programmatically using the `vae_module` package.
+The snippet below demonstrates how to load the pretrained checkpoint and encode a sequence:
+
+```python
+from vae_module import Tokenizer, Config, load_vae, encode
+
+cfg = Config(model_path="vae_epoch380.pt")
+tokenizer = Tokenizer.from_esm()
+model = load_vae(cfg, vocab_size=len(tokenizer.vocab),
+                 pad_idx=tokenizer.pad_idx, bos_idx=tokenizer.bos_idx)
+
+z = encode(model, "MKTFFVLLL", tokenizer, cfg.max_len)
+```
+
+The resulting tensor `z` contains the latent representation of the sequence.
+
+## Building Documentation
+
+The `vae_module/docs` directory includes a minimal Sphinx configuration. After
+installing the dependencies you can generate HTML documentation with:
+
+```bash
+sphinx-build -b html vae_module/docs docs
+```
 
 ---
 
