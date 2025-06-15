@@ -1,0 +1,9 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Jupyter checkpoints
+*.ipynb_checkpoints
+
+# Documentation build output
+/docs/html/
