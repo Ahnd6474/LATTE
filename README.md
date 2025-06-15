@@ -58,6 +58,30 @@ installing the dependencies you can generate HTML documentation with:
 sphinx-build -b html vae_module/docs docs
 ```
 
+## ESMS VAE Paper
+
+This repository includes the short paper [`ESMS_VAE.pdf`](ESMS_VAE.pdf) titled
+"ESMS VAE: A Structure-Informed Variational Autoencoder for Protein
+Engineering". The paper proposes a custom loss that compares ESMS embeddings of
+the original and reconstructed sequences, encouraging the model to encode
+structural similarity. The composite loss is defined as
+
+```
+L = λ(LMSE + LCOS) + α · LCE + β · LKL
+```
+
+where `LCOS = 1 - COS(ESMS(origin), ESMS(recon))` and `LMSE =
+MSE(ESMS(origin), ESMS(recon))`【F:ESMS_VAE.pdf†L90-L101】.
+
+Training on a UniRef50 subsample produced a model with a KL divergence close to
+0.05 at epoch 380 and a reconstruction accuracy of **97.17%** on the test set
+【F:ESMS_VAE.pdf†L135-L140】. The same model achieved excellent downstream
+performance on fluorescent proteins with a **0.987** 5-fold cross-validation
+accuracy and regression RMSE values of **2.7** and **3.8&nbsp;nm** for absorption
+and emission wavelengths, respectively【F:ESMS_VAE.pdf†L12-L23】.
+
+Refer to the PDF for figures, additional experiments, and references.
+
 ---
 
 This repository is intended as a lightweight reference for experiments with protein VAEs and ESM embeddings. Feel free to adapt the notebooks for your own datasets or downstream tasks.
