@@ -1,0 +1,11 @@
+# Core dependencies
+torch
+fair-esm
+biopython
+pandas
+scikit-learn
+PyYAML
+tqdm
+
+# Documentation
+sphinx
