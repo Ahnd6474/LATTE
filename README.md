@@ -50,6 +50,9 @@ z = encode(model, "MKTFFVLLL", tokenizer, cfg.max_len)
 
 The resulting tensor `z` contains the latent representation of the sequence.
 
+For a more complete demonstration, see `examples/usage_example.py` which
+shows encoding and decoding sequences from the command line.
+
 ## Building Documentation
 
 The `vae_module/docs` directory includes a minimal Sphinx configuration. After
