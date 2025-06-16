@@ -39,6 +39,7 @@ def encode_sequences(sequences: List[str], cfg: Config, tokenizer: Tokenizer, mo
     # Truncate sequences longer than the configured maximum length
     truncated = [s[: cfg.max_len] for s in sequences]
     dataset = SequenceDataset(truncated, tokenizer, cfg.max_len)
+    dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
     loader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
@@ -59,6 +60,9 @@ def main() -> None:
     )
     if device == "cuda" and torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
+    cfg = Config(model_path="models/vae_epoch380.pt")
+    tokenizer = Tokenizer.from_esm()
+    model = load_vae(cfg, vocab_size=len(tokenizer.vocab), pad_idx=tokenizer.pad_idx, bos_idx=tokenizer.bos_idx)
 
     labels, sequences = load_sequences("amino acids")
     Z = encode_sequences(sequences, cfg, tokenizer, model).cpu().numpy()
