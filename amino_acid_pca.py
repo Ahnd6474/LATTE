@@ -36,6 +36,9 @@ def load_sequences(directory: str, max_per_class: int | None = None) -> Tuple[Li
 
 def encode_sequences(sequences: List[str], cfg: Config, tokenizer: Tokenizer, model) -> torch.Tensor:
     """Encode sequences into latent vectors using the VAE model."""
+    # Truncate sequences longer than the configured maximum length
+    truncated = [s[: cfg.max_len] for s in sequences]
+    dataset = SequenceDataset(truncated, tokenizer, cfg.max_len)
     dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
     loader = DataLoader(
         dataset,
@@ -46,6 +49,17 @@ def encode_sequences(sequences: List[str], cfg: Config, tokenizer: Tokenizer, mo
 
 
 def main() -> None:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    cfg = Config(model_path="models/vae_epoch380.pt", device=device)
+    tokenizer = Tokenizer.from_esm()
+    model = load_vae(
+        cfg,
+        vocab_size=len(tokenizer.vocab),
+        pad_idx=tokenizer.pad_idx,
+        bos_idx=tokenizer.bos_idx,
+    )
+    if device == "cuda" and torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
     cfg = Config(model_path="models/vae_epoch380.pt")
     tokenizer = Tokenizer.from_esm()
     model = load_vae(cfg, vocab_size=len(tokenizer.vocab), pad_idx=tokenizer.pad_idx, bos_idx=tokenizer.bos_idx)
