@@ -34,6 +34,9 @@ def load_sequences(
         if max_per_class is not None:
             seqs = seqs[:max_per_class]
         for seq in seqs:
+            if not isinstance(seq, str):
+                continue
+            seq = seq.strip()
             if all(c in tokenizer.vocab for c in seq):
                 sequences.append(seq)
                 labels.append(label)
