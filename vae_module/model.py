@@ -5,7 +5,7 @@ import torch.nn as nn
 
 DROPOUT = 0.1
 LATENT_DIM = 256
-EMB_DIM = 128
+EMB_DIM = 256
 NUM_LAYERS = 4
 NUM_HEADS = 8
 FFN_DIM = 512
