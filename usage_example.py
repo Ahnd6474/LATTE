@@ -10,6 +10,7 @@ from vae_module import (
     decode,
     encode_batch,
     SequenceDataset,
+    pad_collate,
 )
 
 
@@ -35,7 +36,11 @@ def main() -> None:
     # Batch encoding example
     sequences = [sequence, "ACDEFGHIKLMNPQRSTVWY"]
     dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
-    loader = DataLoader(dataset, batch_size=2)
+    loader = DataLoader(
+        dataset,
+        batch_size=2,
+        collate_fn=lambda batch: pad_collate(batch, tokenizer.pad_idx),
+    )
     Z = encode_batch(model, loader, tokenizer)
     print("Batch latent tensor shape:", tuple(Z.shape))
 
