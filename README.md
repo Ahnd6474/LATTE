@@ -3,7 +3,7 @@
 ESMS-VAE is a simple implementation of a Variational Autoencoder (VAE) for protein sequences. The notebooks use embeddings from the `fair-esm` package and demonstrate how to train and evaluate the model on a subset of the UniRef50 dataset.
 
 ## Structure
-<img src = "/img/struct.png", width = "500" height="150">
+![구조](img/struct.png)
 ## Repository Contents
 
 - `notebooks/esms-vae-structured.ipynb` – step-by-step training and evaluation workflow.
