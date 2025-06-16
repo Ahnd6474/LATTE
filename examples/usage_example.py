@@ -1,4 +1,13 @@
-"""Example script demonstrating the vae_module API."""
+"""Example script demonstrating the :mod:`vae_module` API.
+
+This file can be executed directly from the repository root.
+"""
+
+from pathlib import Path
+import sys
+
+# Allow running the script without installing the package.
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from torch.utils.data import DataLoader
 

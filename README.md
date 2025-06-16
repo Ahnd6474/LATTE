@@ -50,8 +50,13 @@ z = encode(model, "MKTFFVLLL", tokenizer, cfg.max_len)
 
 The resulting tensor `z` contains the latent representation of the sequence.
 
-For a more complete demonstration, see `examples/usage_example.py` which
-shows encoding and decoding sequences from the command line.
+For a more complete demonstration, run `examples/usage_example.py` from the
+repository root. The script shows encoding and decoding sequences from the
+command line:
+
+```bash
+python examples/usage_example.py
+```
 
 ## Building Documentation
 
