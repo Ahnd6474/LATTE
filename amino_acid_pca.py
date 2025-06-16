@@ -19,8 +19,12 @@ from vae_module import (
 )
 
 
-def load_sequences(directory: str, max_per_class: int | None = None) -> Tuple[List[str], List[str]]:
-    """Load sequences from all CSV files in a directory."""
+def load_sequences(
+    directory: str,
+    tokenizer: Tokenizer,
+    max_per_class: int | None = None,
+) -> Tuple[List[str], List[str]]:
+    """Load sequences from CSV files and drop those with invalid tokens."""
     labels: List[str] = []
     sequences: List[str] = []
     for csv_path in sorted(glob.glob(os.path.join(directory, "*.csv"))):
@@ -29,8 +33,10 @@ def load_sequences(directory: str, max_per_class: int | None = None) -> Tuple[Li
         seqs = df["Sequence"].tolist()
         if max_per_class is not None:
             seqs = seqs[:max_per_class]
-        sequences.extend(seqs)
-        labels.extend([label] * len(seqs))
+        for seq in seqs:
+            if all(c in tokenizer.vocab for c in seq):
+                sequences.append(seq)
+                labels.append(label)
     return labels, sequences
 
 
@@ -60,7 +66,7 @@ def main() -> None:
     if device == "cuda" and torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
 
-    labels, sequences = load_sequences("amino acids")
+    labels, sequences = load_sequences("amino acids", tokenizer)
     Z = encode_sequences(sequences, cfg, tokenizer, model).cpu().numpy()
 
     pca = PCA(n_components=2)
