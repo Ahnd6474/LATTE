@@ -27,7 +27,7 @@ def main() -> None:
 
     sequence = "MKTFFVLLL"
     z = encode(model, sequence, tokenizer, cfg.max_len)
-    reconstructed = decode(model, z, tokenizer, cfg.max_len)
+    reconstructed = decode(model, z, tokenizer, cfg.max_len, truncate_len=len(sequence))
 
     print("Original sequence:     ", sequence)
     print("Latent vector shape:   ", tuple(z.shape))

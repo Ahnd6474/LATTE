@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Sequence, Optional
 
 import torch
 from tqdm import trange
@@ -11,16 +11,40 @@ from .utils import tensor_to_sequence
 logger = setup_logger(__name__)
 
 
-def decode(model: VAETransformerDecoder, z: torch.Tensor, tokenizer: Tokenizer, max_len: int) -> str:
-    """Decode a latent vector into a sequence."""
+def decode(
+    model: VAETransformerDecoder,
+    z: torch.Tensor,
+    tokenizer: Tokenizer,
+    max_len: int,
+    truncate_len: Optional[int] = None,
+) -> str:
+    """Decode a latent vector into a sequence.
+
+    Parameters
+    ----------
+    model:
+        Trained VAE model.
+    z:
+        Latent representation to decode.
+    tokenizer:
+        Tokenizer instance for mapping IDs to characters.
+    max_len:
+        Maximum length to generate.
+    truncate_len:
+        If provided, the decoded sequence will be truncated to this length.
+    """
     model.eval()
     device = next(model.parameters()).device
     z = z.unsqueeze(0).to(device)
 
-    generated = torch.full((1, max_len), tokenizer.pad_idx, device=device, dtype=torch.long)
+    generated = torch.full(
+        (1, max_len), tokenizer.pad_idx, device=device, dtype=torch.long
+    )
     generated[:, 0] = tokenizer.bos_idx
 
-    tgt_mask = torch.triu(torch.full((max_len, max_len), float("-inf"), device=device), diagonal=1)
+    tgt_mask = torch.triu(
+        torch.full((max_len, max_len), float("-inf"), device=device), diagonal=1
+    )
     memory = torch.zeros(1, max_len, model.dec_emb.embedding_dim, device=device)
 
     with torch.no_grad():
@@ -43,10 +67,34 @@ def decode(model: VAETransformerDecoder, z: torch.Tensor, tokenizer: Tokenizer, 
                 break
 
     ids = generated[0]
-    return tensor_to_sequence(ids, tokenizer)
+    seq = tensor_to_sequence(ids, tokenizer)
+    if truncate_len is not None:
+        seq = seq[:truncate_len]
+    return seq
 
 
-def decode_batch(model: VAETransformerDecoder, Z: torch.Tensor, tokenizer: Tokenizer, max_len: int) -> List[str]:
-    """Decode a batch of latent vectors."""
-    seqs = [decode(model, z, tokenizer, max_len) for z in Z]
-    return seqs
+def decode_batch(
+    model: VAETransformerDecoder,
+    Z: torch.Tensor,
+    tokenizer: Tokenizer,
+    max_len: int,
+    truncate_lens: Optional[Sequence[int]] = None,
+) -> List[str]:
+    """Decode a batch of latent vectors.
+
+    Parameters
+    ----------
+    truncate_lens:
+        Optional sequence of lengths used to truncate each decoded sequence.
+        If ``None`` (default), sequences are returned unmodified.
+    """
+
+    if truncate_lens is None:
+        return [decode(model, z, tokenizer, max_len) for z in Z]
+
+    if len(truncate_lens) != len(Z):
+        raise ValueError("truncate_lens must match batch size")
+
+    return [
+        decode(model, z, tokenizer, max_len, tlen) for z, tlen in zip(Z, truncate_lens)
+    ]
