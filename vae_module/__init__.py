@@ -5,7 +5,7 @@ from .loader import load_vae
 from .encoder import encode, encode_batch
 from .decoder import decode, decode_batch
 from .classes import SequenceDataset, Tokenizer
-from .utils import sequence_to_tensor, tensor_to_sequence
+from .utils import sequence_to_tensor, tensor_to_sequence, pad_collate
 from .logger import setup_logger
 from .exceptions import (
     VAEError,
@@ -26,6 +26,7 @@ __all__ = [
     "Tokenizer",
     "sequence_to_tensor",
     "tensor_to_sequence",
+    "pad_collate",
     "setup_logger",
     "VAEError",
     "InvalidSequenceError",
