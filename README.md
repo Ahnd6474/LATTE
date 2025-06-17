@@ -52,8 +52,25 @@ z = encode(model, "MKTFFVLLL", tokenizer, cfg.max_len)
 
 The resulting tensor `z` contains the latent representation of the sequence.
 
-For a more complete demonstration, see `examples/usage_example.py` which
+For a more complete demonstration, see `usage_example.py` which
 shows encoding and decoding sequences from the command line.
+
+## Example Scripts
+
+Several convenience scripts are included in the repository:
+
+- `usage_example.py` – quick demo that loads the pretrained model and encodes a
+  short sequence.
+- `amino_acid_pca.py` – performs PCA on latent vectors from CSV files inside the
+  `amino acids` directory and visualizes the result.
+- `amino_acid_knn.py` – trains a KNN classifier on the same data and reports the
+  test accuracy.
+
+Run any of these with Python to try them out, for example:
+
+```bash
+python usage_example.py
+```
 
 ## Building Documentation
 
