@@ -27,8 +27,9 @@ def load_tm_dataset(
 ) -> Tuple[List[str], np.ndarray]:
     """Load sequences and Tm values from a CSV file.
 
-    Any row with a sequence longer than ``max_len`` or containing characters not
-    present in the tokenizer vocabulary is ignored.
+    Any row with a missing or empty sequence, a sequence longer than
+    ``max_len``, or containing characters not present in the tokenizer
+    vocabulary is ignored.
     """
 
     df = pd.read_csv(csv_path)
@@ -38,6 +39,8 @@ def load_tm_dataset(
     tm_values: List[float] = []
     for seq, tm in zip(df["sequence"], df["Tm"]):
         s = str(seq)
+        if not s or s.lower() == "nan":
+            continue
         if len(s) > max_len:
             continue
         if any(c not in tokenizer.vocab for c in s):
