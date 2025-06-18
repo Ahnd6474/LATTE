@@ -66,7 +66,8 @@ Several convenience scripts are included in the repository:
 - `amino_acid_knn.py` – trains a KNN classifier on the same data and reports the
   test accuracy.
 - `tm_gp_prediction.py` – predicts protein melting temperatures using VAE
-  embeddings with a Gaussian Process regressor.
+  embeddings with a Gaussian Process regressor. Sequences longer than the
+  configured maximum are skipped.
 
 Run any of these with Python to try them out, for example:
 

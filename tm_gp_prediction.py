@@ -20,20 +20,33 @@ from vae_module import (
 )
 
 
-def load_tm_dataset(csv_path: str) -> Tuple[List[str], np.ndarray]:
-    """Load sequences and Tm values from a CSV file."""
+def load_tm_dataset(
+    csv_path: str, tokenizer: Tokenizer, max_len: int
+) -> Tuple[List[str], np.ndarray]:
+    """Load sequences and Tm values from a CSV file, dropping invalid rows."""
+
     df = pd.read_csv(csv_path)
-    seqs = df["sequence"].astype(str).tolist()
-    tm = df["Tm"].astype(float).values
-    return seqs, tm
+    df = df.dropna(subset=["sequence", "Tm"])
+
+    sequences: List[str] = []
+    tm_values: List[float] = []
+    for seq, tm in zip(df["sequence"], df["Tm"]):
+        s = str(seq)
+        if len(s) > max_len:
+            continue
+        if any(c not in tokenizer.vocab for c in s):
+            continue
+        sequences.append(s)
+        tm_values.append(float(tm))
+
+    return sequences, np.array(tm_values, dtype=float)
 
 
 def encode_sequences(
     sequences: List[str], cfg: Config, tokenizer: Tokenizer, model
 ) -> np.ndarray:
     """Encode sequences into latent vectors using the VAE."""
-    trimmed = [s[: cfg.max_len] for s in sequences]
-    dataset = SequenceDataset(trimmed, tokenizer, cfg.max_len)
+    dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
     loader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
@@ -67,7 +80,7 @@ def main(
         Z = data["Z"]
         tm = data["tm"]
     else:
-        sequences, tm = load_tm_dataset(csv_path)
+        sequences, tm = load_tm_dataset(csv_path, tokenizer, cfg.max_len)
         Z = encode_sequences(sequences, cfg, tokenizer, model)
         if cache:
             np.savez(cache, Z=Z, tm=tm)
