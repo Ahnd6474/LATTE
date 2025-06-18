@@ -22,6 +22,7 @@ from vae_module import (
 )
 
 
+<<<<<<< br0ioe-codex/implement-protein-tm-prediction-with-vae-and-gaussian-proces
 def load_tm_dataset(
     csv_path: str, tokenizer: Tokenizer, max_len: int
 ) -> Tuple[List[str], np.ndarray]:
@@ -46,13 +47,26 @@ def load_tm_dataset(
         tm_values.append(float(tm))
 
     return sequences, np.array(tm_values, dtype=float)
+=======
+def load_tm_dataset(csv_path: str) -> Tuple[List[str], np.ndarray]:
+    """Load sequences and Tm values from a CSV file."""
+    df = pd.read_csv(csv_path)
+    seqs = df["sequence"].astype(str).tolist()
+    tm = df["Tm"].astype(float).values
+    return seqs, tm
+>>>>>>> main
 
 
 def encode_sequences(
     sequences: List[str], cfg: Config, tokenizer: Tokenizer, model
 ) -> np.ndarray:
     """Encode sequences into latent vectors using the VAE."""
+<<<<<<< br0ioe-codex/implement-protein-tm-prediction-with-vae-and-gaussian-proces
     dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
+=======
+    trimmed = [s[: cfg.max_len] for s in sequences]
+    dataset = SequenceDataset(trimmed, tokenizer, cfg.max_len)
+>>>>>>> main
     loader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
@@ -86,7 +100,11 @@ def main(
         Z = data["Z"]
         tm = data["tm"]
     else:
+<<<<<<< br0ioe-codex/implement-protein-tm-prediction-with-vae-and-gaussian-proces
         sequences, tm = load_tm_dataset(csv_path, tokenizer, cfg.max_len)
+=======
+        sequences, tm = load_tm_dataset(csv_path)
+>>>>>>> main
         Z = encode_sequences(sequences, cfg, tokenizer, model)
         if cache:
             np.savez(cache, Z=Z, tm=tm)
