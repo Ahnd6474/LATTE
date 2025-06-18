@@ -1,4 +1,3 @@
-import argparse
 from typing import List, Tuple
 
 import os
@@ -95,17 +94,4 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Predict protein Tm using VAE embeddings with a Gaussian Process"
-    )
-    parser.add_argument("--csv", default="tm_datasets.csv", help="CSV file with sequences and Tm")
-    parser.add_argument("--test-size", type=float, default=0.2, help="Fraction of data for testing")
-    parser.add_argument("--random-state", type=int, default=42, help="Random seed")
-    parser.add_argument("--cache", help="Path to cache latent vectors in .npz file")
-    args = parser.parse_args()
-    main(
-        csv_path=args.csv,
-        test_size=args.test_size,
-        random_state=args.random_state,
-        cache=args.cache,
-    )
+    main()
