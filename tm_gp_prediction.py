@@ -22,15 +22,12 @@ from vae_module import (
 )
 
 
+
 def load_tm_dataset(
     csv_path: str, tokenizer: Tokenizer, max_len: int
 ) -> Tuple[List[str], np.ndarray]:
     """Load sequences and Tm values from a CSV file.
 
-    Any row with a missing or empty sequence, a sequence longer than
-    ``max_len``, or containing characters not present in the tokenizer
-    vocabulary is ignored.
-    """
 
     df = pd.read_csv(csv_path)
     df = df.dropna(subset=["sequence", "Tm"])
@@ -41,6 +38,7 @@ def load_tm_dataset(
         s = str(seq)
         if not s or s.lower() == "nan":
             continue
+
         if len(s) > max_len:
             continue
         if any(c not in tokenizer.vocab for c in s):
@@ -50,12 +48,21 @@ def load_tm_dataset(
 
     return sequences, np.array(tm_values, dtype=float)
 
+def load_tm_dataset(csv_path: str) -> Tuple[List[str], np.ndarray]:
+    """Load sequences and Tm values from a CSV file."""
+    df = pd.read_csv(csv_path)
+    seqs = df["sequence"].astype(str).tolist()
+    tm = df["Tm"].astype(float).values
+    return seqs, tm
+
+
 
 def encode_sequences(
     sequences: List[str], cfg: Config, tokenizer: Tokenizer, model
 ) -> np.ndarray:
     """Encode sequences into latent vectors using the VAE."""
-    dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
+    trimmed = [s[: cfg.max_len] for s in sequences]
+    dataset = SequenceDataset(trimmed, tokenizer, cfg.max_len)
     loader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
@@ -90,6 +97,9 @@ def main(
         tm = data["tm"]
     else:
         sequences, tm = load_tm_dataset(csv_path, tokenizer, cfg.max_len)
+        sequences, tm = load_tm_dataset(csv_path, tokenizer, cfg.max_len)
+        sequences, tm = load_tm_dataset(csv_path)
+
         Z = encode_sequences(sequences, cfg, tokenizer, model)
         if cache:
             np.savez(cache, Z=Z, tm=tm)
