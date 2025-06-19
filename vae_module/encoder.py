@@ -19,7 +19,7 @@ def encode(model: VAETransformerDecoder, seq: str, tokenizer: Tokenizer, max_len
         x = sequence_to_tensor(seq, tokenizer, max_len).unsqueeze(0).to(next(model.parameters()).device)
         mask = x != tokenizer.pad_idx
         _, mu, logvar, *_ = model(x, mask)
-        z = mu + torch.randn_like(mu) * torch.exp(0.5 * logvar)
+        z = mu #+ torch.randn_like(mu) * torch.exp(0.5 * logvar)
         logger.debug("Encoded sequence length %d", len(seq))
         return z.squeeze(0)
 
@@ -36,6 +36,6 @@ def encode_batch(model: VAETransformerDecoder, loader: DataLoader, tokenizer: To
             x = x.to(device)
             mask = x != tokenizer.pad_idx
             _, mu, logvar, *_ = model(x, mask)
-            z = mu + torch.randn_like(mu) * torch.exp(0.5 * logvar)
+            z = mu #+ torch.randn_like(mu) * torch.exp(0.5 * logvar)
             zs.append(z.cpu())
     return torch.cat(zs, dim=0)
