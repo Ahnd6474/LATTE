@@ -3,199 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESMS VAE: 구조 정보를 활용한 단백질 엔지니어링</title>
+    <title>ESMS VAE: The Future of Protein Engineering</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
-        /* CSS 성능과 유지보수를 위한 기본 설정 */
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --background-color: #ecf0f1;
-            --text-color: #34495e;
-            --card-bg-color: #ffffff;
-            --button-color: #27ae60;
-            --button-hover-color: #2ecc71;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --bg-color-start: #111827;
+            --bg-color-end: #1f2937;
+            --card-bg-color: rgba(31, 41, 55, 0.5);
+            --text-color: #e5e7eb;
+            --primary-accent-color: #38bdf8;
+            --secondary-accent-color: #818cf8;
+            --glow-color: rgba(56, 189, 248, 0.5);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-radius: 12px;
         }
 
-        /* 전체 페이지 레이아웃 및 폰트 설정 */
+        @keyframes background-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, var(--bg-color-start), var(--bg-color-end));
+            background-size: 200% 200%;
+            color: var(--text-color);
             margin: 0;
             padding: 0;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.7;
             display: flex;
             justify-content: center;
+            animation: background-pan 15s ease infinite;
         }
 
-        /* 콘텐츠 컨테이너 중앙 정렬 및 최대 너비 지정 */
         .container {
-            max-width: 900px;
+            max-width: 960px;
             width: 100%;
-            padding: 20px 40px;
+            padding: 40px 20px;
             box-sizing: border-box;
         }
 
         /* 헤더 스타일 */
         header {
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 2px solid #bdc3c7;
-            padding-bottom: 20px;
+            margin-bottom: 80px;
         }
 
         header h1 {
-            color: var(--primary-color);
-            font-size: 2.5em;
-            margin-bottom: 0.2em;
+            font-size: 3.5em;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary-accent-color), var(--secondary-accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
         }
 
         header p {
             font-size: 1.2em;
-            color: #7f8c8d;
+            font-weight: 300;
+            color: #9ca3af;
+            max-width: 700px;
+            margin: 0 auto;
         }
 
-        /* 섹션 스타일 */
-        section {
-            background-color: var(--card-bg-color);
-            margin-bottom: 30px;
-            padding: 30px;
+        /* Glassmorphism 카드 스타일 */
+        .card {
+            background: var(--card-bg-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-
-        h2 {
-            color: var(--primary-color);
-            border-left: 5px solid var(--secondary-color);
-            padding-left: 15px;
-            font-size: 1.8em;
+            padding: 40px;
+            margin-bottom: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            animation: fade-in-up 0.8s ease-out forwards;
         }
         
-        h3 {
-             color: var(--primary-color);
-             margin-top: 30px;
-             font-size: 1.4em;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.3s; }
+        .card:nth-child(3) { animation-delay: 0.5s; }
+
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #f9fafb;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 15px;
+            color: var(--primary-accent-color);
+        }
+
+        strong {
+            color: var(--primary-accent-color);
+            font-weight: 600;
         }
 
         /* 이미지 스타일 */
         .img-container {
             text-align: center;
-            margin-top: 20px;
+            margin: 30px 0;
         }
         
         img {
             max-width: 100%;
             height: auto;
             border-radius: var(--border-radius);
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
         }
         
         figcaption {
-            margin-top: 10px;
-            font-style: italic;
+            margin-top: 15px;
             font-size: 0.9em;
-            color: #7f8c8d;
-        }
-
-        /* 성능 지표 리스트 스타일 */
-        ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        li {
-            padding: 10px 0 10px 25px;
-            position: relative;
-            border-bottom: 1px dashed #e0e0e0;
+            color: #9ca3af;
         }
         
-        li:last-child {
-            border-bottom: none;
+        /* 성능 지표 그리드 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
         }
-
-        li::before {
-            content: '✓';
-            color: var(--button-color);
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-            top: 10px;
-        }
-
-        strong {
-            color: var(--secondary-color);
-        }
-
-        /* Get Started 버튼 스타일 */
-        .cta-section {
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        .cta-button {
-            background-color: var(--button-color);
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 1.2em;
-            font-weight: bold;
+        
+        .metric-item {
+            background: rgba(17, 24, 39, 0.6);
+            padding: 25px;
             border-radius: var(--border-radius);
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+        }
+        
+        .metric-item h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: var(--secondary-accent-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .metric-item h3 i {
+            margin-right: 10px;
+        }
+        
+        .metric-item ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .metric-item li {
+            font-size: 0.95em;
+        }
+
+        /* CTA 버튼 */
+        .cta-button {
+            background: linear-gradient(90deg, var(--primary-accent-color), var(--secondary-accent-color));
+            color: #ffffff;
+            padding: 18px 40px;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 50px;
+            display: inline-block;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
         }
 
         .cta-button:hover {
-            background-color: var(--button-hover-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 10px 20px var(--glow-color);
         }
-
+        
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>ESMS VAE: 구조 정보를 통해 단백질의 성능을 예측하다</h1>
-            [cite_start]<p>구조적 유사성을 학습한 새로운 VAE 모델, ESMS VAE를 소개합니다. [cite: 3] [cite_start]기존의 서열 기반 단백질 VAE의 일반화 및 재구성 능력의 한계를 극복하고, 잠재 공간(latent space)에 더 깊은 의미를 담아냈습니다. [cite: 2, 3]</p>
+            <h1>ESMS VAE</h1>
+            <p>A Structure-Informed Variational Autoencoder for Protein Engineering. [cite_start]ESMS VAE overcomes the limitations of traditional models by learning structural similarities to predict mutational effects and generate novel, functional proteins. [cite: 3]</p>
         </header>
 
         <main>
-            <section>
-                <h2>핵심 성능: 돌연변이 효과 예측 (DMS)</h2>
-                <p>단백질 엔지니어링에서 돌연변이가 단백질 기능에 미치는 영향을 예측하는 것은 매우 중요합니다. [cite_start]ESMS VAE는 이 분야에서 뛰어난 성능을 입증했습니다. [cite: 8]</p>
-                [cite_start]<p>Protein Gym의 DMS(Deep Mutational Scanning) 치환 데이터셋을 이용한 성능 평가에서, ESMS VAE는 162개의 데이터셋에 대해 평균 <strong>스피어만 상관 계수 (Spearman's ρ) 0.7779</strong>라는 높은 점수를 기록했습니다. [cite: 95, 97]</p>
-                [cite_start]<p>이는 지도 학습 기반의 DMS 치환 예측 모델인 Kermut(평균 스피어만 상관 계수 0.6982)과 비교했을 때 더 뛰어난 결과입니다. [cite: 98, 100] 아래 그래프는 각 데이터셋에 대한 ESMS VAE와 Kermut의 성능을 비교한 것입니다. 대부분의 점에서 ESMS VAE가 y=x 선 위에 위치하며 더 나은 성능을 보임을 알 수 있습니다.</p>
+            <section class="card">
+                <h2><i class="fa-solid fa-magnifying-glass-chart"></i>DMS Performance Analysis</h2>
+                <p>A key challenge in protein engineering is predicting the effects of mutations. [cite_start]ESMS VAE excels in this domain, demonstrating superior performance on Deep Mutational Scanning (DMS) datasets from Protein Gym. [cite: 94]</p>
+                [cite_start]<p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>[cite: 97]. [cite_start]This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets[cite: 100]. [cite_start]This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. [cite: 8]</p>
                 <figure class="img-container">
-                    <img src="https://i.imgur.com/k2tC7n9.png" alt="ESMS VAE와 Kermut의 성능 비교 그래프">
-                    [cite_start]<figcaption>ESMS VAE와 Kermut의 스피어만 상관 계수 비교. [cite: 101] ESMS VAE는 많은 데이터셋에서 Kermut보다 높은 상관 관계를 보여주었습니다.</figcaption>
+                    <img src="https://i.imgur.com/k2tC7n9.png" alt="ESMS VAE vs Kermut Performance Graph">
+                    [cite_start]<figcaption>Comparison of ESMS VAE and Kermut on Spearman correlation. [cite: 101]</figcaption>
                 </figure>
-                [cite_start]<p>이러한 결과는 ESMS VAE의 잠재 공간이 단백질의 돌연변이에 따른 구조적, 기능적 변화를 매우 효과적으로 포착하고 있음을 의미합니다. [cite: 8]</p>
-                
-                <h3>주요 성능 지표</h3>
-                <ul>
-                    [cite_start]<li><strong>재구성 및 일반화</strong>: UniRef50에서 무작위로 샘플링된 테스트셋에 대해 <strong>97.17%</strong>의 높은 재구성률을 달성하여 새로운 단백질에 대한 뛰어난 일반화 성능을 입증했습니다. [cite: 4]</li>
-                    [cite_start]<li><strong>새로운 단백질 생성</strong>: 잠재 공간에서 무작위로 벡터를 샘플링하고 디코딩한 결과, 훈련에 사용된 서열과 최대 10% 내외의 상동성을 보이는 완전히 새로운 단백질 서열을 생성했습니다. [cite: 5, 6]</li>
-                    <li><strong>형광 단백질(FP) 분석</strong>:
-                        <ul>
-                            [cite_start]<li><strong>분류</strong>: 형광 단백질(FP)과 비형광 단백질(Non-FP)을 분류하는 작업에서 <strong>98.7%의 5-겹 교차 검증 정확도</strong>를 보였습니다. [cite: 9]</li>
-                            [cite_start]<li><strong>회귀</strong>: 여기 파장(excitation wavelength)과 방출 파장(emission wavelength)을 예측하는 회귀 작업에서 각각 <strong>2.7nm와 3.8nm의 낮은 RMSE</strong> 값을 달성했습니다. [cite: 9]</li>
-                        </ul>
-                    </li>
-                </ul>
             </section>
             
-            <section class="cta-section">
-                <h2>지금 바로 시작하세요</h2>
-                [cite_start]<p>ESMS VAE의 모든 훈련된 모델과 코드는 GitHub에서 확인할 수 있습니다. [cite: 12] 아래 버튼을 눌러 프로젝트를 직접 확인하고 단백질 엔지니어링의 새로운 가능성을 탐색해 보세요.</p>
-                <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">Get Started</a>
+            <section class="card">
+                <h2><i class="fa-solid fa-cubes-stacked"></i>Key Capabilities</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <h3><i class="fa-solid fa-arrows-retweet"></i>Reconstruction & Generalization</h3>
+                        [cite_start]<p>Achieved a <strong>97.17% reconstruction rate</strong> on a test set randomly sampled from UniRef50, proving its ability to generalize to diverse proteins. [cite: 4, 80]</p>
+                    </div>
+                    <div class="metric-item">
+                        <h3><i class="fa-solid fa-lightbulb"></i>Novel Protein Generation</h3>
+                        [cite_start]<p>Generated sequences show a maximum identity of only ~10% with training data, confirming the model creates entirely new proteins rather than copies. [cite: 5, 6]</p>
+                    </div>
+                    <div class="metric-item">
+                        <h3><i class="fa-solid fa-wand-magic-sparkles"></i>Fluorescent Protein (FP) Analysis</h3>
+                        <ul>
+                            [cite_start]<li><strong>Classification:</strong> <strong>98.7% 5-fold CV accuracy</strong> in classifying FPs and non-FPs. [cite: 9, 108]</li>
+                            [cite_start]<li><strong>Regression:</strong> Low RMSE values of <strong>2.7nm</strong> (excitation) and <strong>3.8nm</strong> (emission) for wavelength prediction. [cite: 9]</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="card" style="text-align: center;">
+                <h2><i class="fa-solid fa-rocket"></i>Get Started</h2>
+                <p style="max-width: 600px; margin: 20px auto 30px;">All trained models and code are publicly available on GitHub. Explore the project to unlock new possibilities in protein engineering.</p>
+                <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-github"></i> View on GitHub
+                </a>
             </section>
         </main>
     </div>
-
 </body>
 </html>
