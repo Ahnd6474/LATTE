@@ -41,6 +41,9 @@
             }
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(120deg, var(--bg-color-start), var(--bg-color-end));
@@ -48,91 +51,95 @@
             color: var(--text-color);
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
             animation: background-pan 15s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .container {
-            max-width: 960px;
-            width: 100%;
-            padding: 40px 20px;
-            box-sizing: border-box;
-        }
-
+        /* 최상단 고정 내비게이션 바 */
         nav {
             position: sticky;
             top: 0;
+            width: 100%;
             background: rgba(17, 24, 39, 0.8);
-            padding: 10px 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 15px 0;
             display: flex;
             justify-content: center;
-            gap: 30px;
+            flex-wrap: wrap;
+            gap: 25px;
             border-bottom: 1px solid var(--border-color);
             z-index: 1000;
         }
-
         nav a {
-            color: var(--text-color);
+            color: #d1d5db;
             text-decoration: none;
             font-weight: 500;
+            transition: color 0.3s;
         }
-
         nav a:hover {
             color: var(--primary-accent-color);
         }
 
-        /* 헤더 스타일 */
+        .container {
+            max-width: 900px; /* 너비 살짝 줄여서 중앙 집중 강화 */
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
         header {
             text-align: center;
-            margin-bottom: 80px;
+            padding: 60px 0 80px 0;
+            width: 100%;
         }
-
         header h1 {
-            font-size: 3.5em;
+            font-size: 3.2em;
             font-weight: 700;
             background: linear-gradient(90deg, var(--primary-accent-color), var(--secondary-accent-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
         }
-
         header p {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 300;
             color: #9ca3af;
             max-width: 700px;
             margin: 0 auto;
+            line-height: 1.7;
+        }
+        
+        main {
+            width: 100%;
         }
 
-        /* Glassmorphism 카드 스타일 */
         .card {
             background: var(--card-bg-color);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            padding: 40px;
+            padding: 35px;
             margin-bottom: 40px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             opacity: 0;
             animation: fade-in-up 0.8s ease-out forwards;
+            scroll-margin-top: 80px; /* 고정된 nav 높이만큼 여백 추가 */
         }
-        
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
         
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.3s; }
-        .card:nth-child(3) { animation-delay: 0.5s; }
-        .card:nth-child(4) { animation-delay: 0.7s; }
-        .card:nth-child(5) { animation-delay: 0.9s; }
-
+        main .card:nth-of-type(1) { animation-delay: 0.1s; }
+        main .card:nth-of-type(2) { animation-delay: 0.2s; }
+        main .card:nth-of-type(3) { animation-delay: 0.3s; }
+        main .card:nth-of-type(4) { animation-delay: 0.4s; }
 
         h2 {
-            font-size: 2.2em;
+            font-size: 2em;
             font-weight: 600;
             margin-top: 0;
             margin-bottom: 30px;
@@ -140,7 +147,6 @@
             display: flex;
             align-items: center;
         }
-        
         h2 i {
             margin-right: 15px;
             color: var(--primary-accent-color);
@@ -151,89 +157,130 @@
             font-weight: 600;
         }
 
-        /* 이미지 스타일 */
         .img-container {
             text-align: center;
             margin: 30px 0;
         }
-        
         img {
             max-width: 100%;
             height: auto;
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
         }
-        
         figcaption {
             margin-top: 15px;
             font-size: 0.9em;
             color: #9ca3af;
         }
         
-        /* 성능 지표 그리드 */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 25px;
             margin-top: 30px;
         }
-        
         .metric-item {
             background: rgba(17, 24, 39, 0.6);
             padding: 25px;
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
         }
-        
         .metric-item h3 {
             margin-top: 0;
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: var(--secondary-accent-color);
             display: flex;
             align-items: center;
         }
-        
-        .metric-item h3 i {
-            margin-right: 10px;
-        }
-        
-        .metric-item ul {
-            padding-left: 20px;
-            margin: 0;
-        }
-        .metric-item li {
-            font-size: 0.95em;
-        }
+        .metric-item h3 i { margin-right: 10px; }
+        .metric-item ul { padding-left: 20px; margin: 0; }
+        .metric-item li { font-size: 0.95em; }
 
-        /* CTA 버튼 */
+        .cta-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 30px;
+        }
         .cta-button {
             background: linear-gradient(90deg, var(--primary-accent-color), var(--secondary-accent-color));
             color: #ffffff;
-            padding: 18px 40px;
+            padding: 16px 35px;
             text-decoration: none;
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 600;
             border-radius: 50px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border: none;
         }
-
         .cta-button:hover {
             transform: scale(1.05) translateY(-3px);
             box-shadow: 0 10px 20px var(--glow-color);
         }
         
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary-accent-color);
+        }
+        .cta-button.secondary:hover {
+            background-color: rgba(56, 189, 248, 0.1);
+            box-shadow: 0 5px 15px rgba(56, 189, 248, 0.2);
+        }
+        
+        /* 푸터 스타일 */
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 40px;
+            color: #9ca3af;
+            border-top: 1px solid var(--border-color);
+        }
+        footer p {
+            margin: 5px 0;
+        }
+
+        /* --- 반응형 디자인 (모바일 & 태블릿) --- */
+        @media (max-width: 768px) {
+            nav {
+                gap: 15px;
+                padding: 15px 10px;
+            }
+            header {
+                padding: 40px 0 60px 0;
+            }
+            header h1 {
+                font-size: 2.5em;
+            }
+            header p {
+                font-size: 1em;
+            }
+            .card {
+                padding: 25px;
+            }
+            h2 {
+                font-size: 1.8em;
+            }
+            .cta-button {
+                font-size: 1em;
+                padding: 14px 28px;
+            }
+        }
+
     </style>
 </head>
 <body>
 
     <nav>
+        <a href="#get-started">Get Started</a>
         <a href="#performance">Performance</a>
         <a href="#capabilities">Capabilities</a>
         <a href="#architecture">Architecture</a>
         <a href="#team">Team</a>
-        <a href="#get-started">Get Started</a>
     </nav>
 
     <div class="container">
@@ -243,29 +290,27 @@
         </header>
 
         <main>
+            <section id="get-started" class="card" style="text-align: center;">
+                <h2><i class="fa-solid fa-rocket"></i>Get Started</h2>
+                [cite_start]<p style="max-width: 600px; margin: 0 auto;">All trained models and code are publicly available. [cite: 12] Explore the project to unlock new possibilities in protein engineering.</p>
+                <div class="cta-container">
+                    <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-github"></i> View on GitHub
+                    </a>
+                    <a href="#" class="cta-button secondary" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-solid fa-book-open"></i> Read the Paper
+                    </a>
+                </div>
+            </section>
+            
             <section id="performance" class="card">
                 <h2><i class="fa-solid fa-magnifying-glass-chart"></i>DMS Performance Analysis</h2>
                 <p>A key challenge in protein engineering is predicting the effects of mutations. [cite_start]ESMS VAE excels in this domain, demonstrating superior performance on Deep Mutational Scanning (DMS) datasets from Protein Gym. [cite: 94]</p>
-                [cite_start]<p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>[cite: 97]. [cite_start]This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets[cite: 100]. [cite_start]This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. [cite: 8]</p>
+                [cite_start]<p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>. [cite: 97] [cite_start]This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets. [cite: 100] [cite_start]This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. [cite: 8]</p>
                 <figure class="img-container">
-                    <img src="img/DMS_rho.png" alt="ESMS VAE vs Kermut Performance Graph">
+                    <img src="https://i.imgur.com/k2tC7n9.png" alt="ESMS VAE vs Kermut Performance Graph">
                     [cite_start]<figcaption>Comparison of ESMS VAE and Kermut on Spearman correlation. [cite: 101]</figcaption>
                 </figure>
-            </section>
-
-            <section id="architecture" class="card">
-                <h2><i class="fa-solid fa-diagram-project"></i>Architecture & Training</h2>
-                <p>ESMS VAE is a lightweight <strong>5.5M</strong>-parameter transformer composed of four encoder and four decoder layers. Training uses a custom <strong>structural loss</strong> based on ESMS embeddings so the latent space captures three-dimensional features. On a UniRef50 subset the model reached <strong>97.17% reconstruction accuracy</strong> and remained robust even when noise was added.</p>
-                <div class="img-container">
-                    <img src="img/struct.png" alt="Model architecture diagram">
-                    <figcaption>Overview of the four-layer Transformer VAE.</figcaption>
-                </div>
-            </section>
-
-            <section id="team" class="card">
-                <h2><i class="fa-solid fa-user-group"></i>Team & Citation</h2>
-                <p>This project was developed by Danny Ahn, Shihyun Moon, Jooyoung Jung, Minjae Lee and Jeongsu Park. For full methodology and references see the <a href="docs/ESMS_VAE.pdf">project paper</a>.</p>
-                <p>Questions? Contact <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a>.</p>
             </section>
             
             <section id="capabilities" class="card">
@@ -288,15 +333,28 @@
                     </div>
                 </div>
             </section>
-            
-            <section id="get-started" class="card" style="text-align: center;">
-                <h2><i class="fa-solid fa-rocket"></i>Get Started</h2>
-                <p style="max-width: 600px; margin: 20px auto 30px;">All trained models and code are publicly available on GitHub. Explore the project to unlock new possibilities in protein engineering.</p>
-                <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">
-                    <i class="fa-brands fa-github"></i> View on GitHub
-                </a>
+
+            <section id="architecture" class="card">
+                <h2><i class="fa-solid fa-diagram-project"></i>Architecture & Training</h2>
+                [cite_start]<p>ESMS VAE is a lightweight <strong>5.5M</strong>-parameter transformer composed of four encoder and four decoder layers. [cite: 64] [cite_start]Training uses a custom <strong>structural loss</strong> based on ESMS embeddings so the latent space captures three-dimensional features. [cite: 42, 45] [cite_start]On a UniRef50 subset the model reached <strong>97.17% reconstruction accuracy</strong> and remained robust even when noise was added. [cite: 4, 83]</p>
+                <div class="img-container">
+                    <img src="https://i.imgur.com/uS3kG34.png" alt="Model architecture diagram">
+                    [cite_start]<figcaption>Overview of the four-layer Transformer VAE. [cite: 61]</figcaption>
+                </div>
+            </section>
+
+            <section id="team" class="card">
+                <h2><i class="fa-solid fa-user-group"></i>Team & Citation</h2>
+                [cite_start]<p>This project was developed by Danny Ahn, Shihyun Moon, Jooyoung Jung, Minjae Lee and Jeongsu Park. [cite: 1] For full methodology and references, please refer to the project paper.</p>
+                <p>Questions? [cite_start]Contact <a href="mailto:ahnd6474@gmail.com" style="color: var(--primary-accent-color);">ahnd6474@gmail.com</a>. [cite: 2]</p>
             </section>
         </main>
     </div>
+    
+    <footer>
+        <p>This research was supported by Daegu Science High School.</p>
+        [cite_start]<p>This research was supported by Anseong Topbob. [cite: 163]</p>
+    </footer>
+
 </body>
 </html>
