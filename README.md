@@ -66,14 +66,11 @@ Several convenience scripts are included in the repository:
 - `amino_acid_knn.py` – trains a KNN classifier on the same data and reports the
   test accuracy.
 - `tm_gp_prediction.py` – predicts protein melting temperatures using VAE
- embeddings with a Gaussian Process regressor. Rows with missing sequences,
-  characters outside the model vocabulary, or sequences longer than the
-  configured maximum length are skipped.
-  embeddings with a Gaussian Process regressor. Any sequence that exceeds the
-  configured maximum length or contains characters outside the model
-  vocabulary is skipped.
-  embeddings with a Gaussian Process regressor.
+  embeddings with a Gaussian Process regressor. Sequences that exceed the
+  configured maximum length or contain unknown characters are skipped.
 
+The `amino acids` folder contains example CSV files with latent vectors used by
+the PCA and KNN scripts.
 
 Run any of these with Python to try them out, for example:
 

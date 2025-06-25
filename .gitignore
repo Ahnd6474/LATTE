@@ -7,3 +7,10 @@ __pycache__/
 
 # Documentation build output
 /docs/html/
+
+# Generated demo files
+*.html
+img/__results*
+img/download*
+img/image*
+img/minjae.jpg
