@@ -60,6 +60,28 @@
             box-sizing: border-box;
         }
 
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(17, 24, 39, 0.8);
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--primary-accent-color);
+        }
+
         /* 헤더 스타일 */
         header {
             text-align: center;
@@ -105,6 +127,8 @@
         .card:nth-child(1) { animation-delay: 0.1s; }
         .card:nth-child(2) { animation-delay: 0.3s; }
         .card:nth-child(3) { animation-delay: 0.5s; }
+        .card:nth-child(4) { animation-delay: 0.7s; }
+        .card:nth-child(5) { animation-delay: 0.9s; }
 
 
         h2 {
@@ -204,6 +228,14 @@
 </head>
 <body>
 
+    <nav>
+        <a href="#performance">Performance</a>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#team">Team</a>
+        <a href="#get-started">Get Started</a>
+    </nav>
+
     <div class="container">
         <header>
             <h1>ESMS VAE</h1>
@@ -211,17 +243,32 @@
         </header>
 
         <main>
-            <section class="card">
+            <section id="performance" class="card">
                 <h2><i class="fa-solid fa-magnifying-glass-chart"></i>DMS Performance Analysis</h2>
                 <p>A key challenge in protein engineering is predicting the effects of mutations. [cite_start]ESMS VAE excels in this domain, demonstrating superior performance on Deep Mutational Scanning (DMS) datasets from Protein Gym. [cite: 94]</p>
                 [cite_start]<p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>[cite: 97]. [cite_start]This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets[cite: 100]. [cite_start]This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. [cite: 8]</p>
                 <figure class="img-container">
-                    <img src="https://i.imgur.com/k2tC7n9.png" alt="ESMS VAE vs Kermut Performance Graph">
+                    <img src="img/DMS_rho.png" alt="ESMS VAE vs Kermut Performance Graph">
                     [cite_start]<figcaption>Comparison of ESMS VAE and Kermut on Spearman correlation. [cite: 101]</figcaption>
                 </figure>
             </section>
+
+            <section id="architecture" class="card">
+                <h2><i class="fa-solid fa-diagram-project"></i>Architecture & Training</h2>
+                <p>ESMS VAE is a lightweight <strong>5.5M</strong>-parameter transformer composed of four encoder and four decoder layers. Training uses a custom <strong>structural loss</strong> based on ESMS embeddings so the latent space captures three-dimensional features. On a UniRef50 subset the model reached <strong>97.17% reconstruction accuracy</strong> and remained robust even when noise was added.</p>
+                <div class="img-container">
+                    <img src="img/struct.png" alt="Model architecture diagram">
+                    <figcaption>Overview of the four-layer Transformer VAE.</figcaption>
+                </div>
+            </section>
+
+            <section id="team" class="card">
+                <h2><i class="fa-solid fa-user-group"></i>Team & Citation</h2>
+                <p>This project was developed by Danny Ahn, Shihyun Moon, Jooyoung Jung, Minjae Lee and Jeongsu Park. For full methodology and references see the <a href="docs/ESMS_VAE.pdf">project paper</a>.</p>
+                <p>Questions? Contact <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a>.</p>
+            </section>
             
-            <section class="card">
+            <section id="capabilities" class="card">
                 <h2><i class="fa-solid fa-cubes-stacked"></i>Key Capabilities</h2>
                 <div class="metrics-grid">
                     <div class="metric-item">
@@ -242,7 +289,7 @@
                 </div>
             </section>
             
-            <section class="card" style="text-align: center;">
+            <section id="get-started" class="card" style="text-align: center;">
                 <h2><i class="fa-solid fa-rocket"></i>Get Started</h2>
                 <p style="max-width: 600px; margin: 20px auto 30px;">All trained models and code are publicly available on GitHub. Explore the project to unlock new possibilities in protein engineering.</p>
                 <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">
