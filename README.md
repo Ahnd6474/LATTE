@@ -112,6 +112,8 @@ performance on fluorescent proteins with a **0.987** 5-fold cross-validation
 accuracy and regression RMSE values of **2.7** and **3.8&nbsp;nm** for absorption
 and emission wavelengths, respectively【F:docs/ESMS_VAE.pdf†L12-L23】.
 
+On the ProteinGym DMS substitution benchmark, ESMS VAE’s latent embeddings yield an average Spearman ρ of 0.7779, effectively capturing mutational effects and surpassing the supervised Kermut model’s 0.6982 performance
+
 Refer to the PDF for figures, additional experiments, and references.
 
 ---
