@@ -286,7 +286,7 @@
     <div class="container">
         <header>
             <h1>ESMS VAE</h1>
-            <p>A Structure-Informed Variational Autoencoder for Protein Engineering. [cite_start]ESMS VAE overcomes the limitations of traditional models by learning structural similarities to predict mutational effects and generate novel, functional proteins. [cite: 3]</p>
+            <p>A Structure-Informed Variational Autoencoder for Protein Engineering. ESMS VAE overcomes the limitations of traditional models by learning structural similarities to predict mutational effects and generate novel, functional proteins. </p>
             <figure class="img-container">
                 <img src="img/struct.png" alt="ESMS VAE structure">
                 <figcaption>Model structure overview</figcaption>
@@ -296,7 +296,7 @@
         <main>
             <section id="get-started" class="card" style="text-align: center;">
                 <h2><i class="fa-solid fa-rocket"></i>Get Started</h2>
-                [cite_start]<p style="max-width: 600px; margin: 0 auto;">All trained models and code are publicly available. [cite: 12] Explore the project to unlock new possibilities in protein engineering.</p>
+                <p style="max-width: 600px; margin: 0 auto;">All trained models and code are publicly available.  Explore the project to unlock new possibilities in protein engineering.</p>
                 <div class="cta-container">
                     <a href="https://github.com/Ahnd6474/ESMS-VAE" class="cta-button" target="_blank" rel="noopener noreferrer">
                         <i class="fa-brands fa-github"></i> View on GitHub
@@ -309,11 +309,11 @@
             
             <section id="performance" class="card">
                 <h2><i class="fa-solid fa-magnifying-glass-chart"></i>DMS Performance Analysis</h2>
-                <p>A key challenge in protein engineering is predicting the effects of mutations. [cite_start]ESMS VAE excels in this domain, demonstrating superior performance on Deep Mutational Scanning (DMS) datasets from Protein Gym. [cite: 94]</p>
-                [cite_start]<p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>. [cite: 97] [cite_start]This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets. [cite: 100] [cite_start]This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. [cite: 8]</p>
+                <p>A key challenge in protein engineering is predicting the effects of mutations. ESMS VAE excels in this domain, demonstrating superior performance on Deep Mutational Scanning (DMS) datasets from Protein Gym. </p>
+                <p>When evaluated across 162 datasets, ESMS VAE achieved a mean <strong>Spearman's ρ of 0.7779</strong>.  This significantly outperforms the supervised model Kermut, which had a mean Spearman constant of 0.6982 on the same datasets.  This high correlation indicates that the model's latent space effectively captures the functional impact of mutational changes. </p>
                 <figure class="img-container">
                     <img src="https://github.com/Ahnd6474/ESMS-VAE/blob/main/img/compare.png?raw=true" alt="ESMS VAE vs Kermut Performance Graph">
-                    [cite_start]<figcaption>Comparison of ESMS VAE and Kermut on Spearman correlation. [cite: 101]</figcaption>
+                    <figcaption>Comparison of ESMS VAE and Kermut on Spearman correlation. </figcaption>
                 </figure>
             </section>
             
@@ -322,17 +322,17 @@
                 <div class="metrics-grid">
                     <div class="metric-item">
                         <h3><i class="fa-solid fa-arrows-retweet"></i>Reconstruction & Generalization</h3>
-                        [cite_start]<p>Achieved a <strong>97.17% reconstruction rate</strong> on a test set randomly sampled from UniRef50, proving its ability to generalize to diverse proteins. [cite: 4, 80]</p>
+                        <p>Achieved a <strong>97.17% reconstruction rate</strong> on a test set randomly sampled from UniRef50, proving its ability to generalize to diverse proteins. </p>
                     </div>
                     <div class="metric-item">
                         <h3><i class="fa-solid fa-lightbulb"></i>Novel Protein Generation</h3>
-                        [cite_start]<p>Generated sequences show a maximum identity of only ~10% with training data, confirming the model creates entirely new proteins rather than copies. [cite: 5, 6]</p>
+                        <p>Generated sequences show a maximum identity of only ~10% with training data, confirming the model creates entirely new proteins rather than copies. </p>
                     </div>
                     <div class="metric-item">
                         <h3><i class="fa-solid fa-wand-magic-sparkles"></i>Fluorescent Protein (FP) Analysis</h3>
                         <ul>
-                            [cite_start]<li><strong>Classification:</strong> <strong>98.7% 5-fold CV accuracy</strong> in classifying FPs and non-FPs. [cite: 9, 108]</li>
-                            [cite_start]<li><strong>Regression:</strong> Low RMSE values of <strong>2.7nm</strong> (excitation) and <strong>3.8nm</strong> (emission) for wavelength prediction. [cite: 9]</li>
+                            <li><strong>Classification:</strong> <strong>98.7% 5-fold CV accuracy</strong> in classifying FPs and non-FPs. </li>
+                            <li><strong>Regression:</strong> Low RMSE values of <strong>2.7nm</strong> (excitation) and <strong>3.8nm</strong> (emission) for wavelength prediction. </li>
                         </ul>
                     </div>
                 </div>
@@ -340,24 +340,24 @@
 
             <section id="architecture" class="card">
                 <h2><i class="fa-solid fa-diagram-project"></i>Architecture & Training</h2>
-                [cite_start]<p>ESMS VAE is a lightweight <strong>5.5M</strong>-parameter transformer composed of four encoder and four decoder layers. [cite: 64] [cite_start]Training uses a custom <strong>structural loss</strong> based on ESMS embeddings so the latent space captures three-dimensional features. [cite: 42, 45] [cite_start]On a UniRef50 subset the model reached <strong>97.17% reconstruction accuracy</strong> and remained robust even when noise was added. [cite: 4, 83]</p>
+                <p>ESMS VAE is a lightweight <strong>5.5M</strong>-parameter transformer composed of four encoder and four decoder layers.  Training uses a custom <strong>structural loss</strong> based on ESMS embeddings so the latent space captures three-dimensional features.  On a UniRef50 subset the model reached <strong>97.17% reconstruction accuracy</strong> and remained robust even when noise was added. </p>
                 <div class="img-container">
                     <img src="https://github.com/Ahnd6474/ESMS-VAE/raw/main/img/struct.png" alt="Model architecture diagram">
-                    [cite_start]<figcaption>Overview of the four-layer Transformer VAE. [cite: 61]</figcaption>
+                    <figcaption>Overview of the four-layer Transformer VAE. </figcaption>
                 </div>
             </section>
 
             <section id="team" class="card">
                 <h2><i class="fa-solid fa-user-group"></i>Team & Citation</h2>
-                [cite_start]<p>This project was developed by Danny Ahn, Shihyun Moon, Jooyoung Jung, Minjae Lee and Jeongsu Park. [cite: 1] For full methodology and references, please refer to the project paper.</p>
-                <p>Questions? [cite_start]Contact <a href="mailto:ahnd6474@gmail.com" style="color: var(--primary-accent-color);">ahnd6474@gmail.com</a>. [cite: 2]</p>
+                <p>This project was developed by Danny Ahn, Shihyun Moon, Jooyoung Jung, Minjae Lee and Jeongsu Park.  For full methodology and references, please refer to the project paper.</p>
+                <p>Questions? Contact <a href="mailto:ahnd6474@gmail.com" style="color: var(--primary-accent-color);">ahnd6474@gmail.com</a>. </p>
             </section>
         </main>
     </div>
     
     <footer>
         <p>This research was supported by Daegu Science High School.</p>
-        [cite_start]<p>This research was supported by Anseong Topbob. [cite: 163]</p>
+        <p>This research was supported by Anseong Topbob. </p>
     </footer>
 
 </body>
