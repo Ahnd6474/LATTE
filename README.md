@@ -92,13 +92,10 @@ Several convenience scripts are included in the repository:
 - `train_baseline.py` – command-line tool for training a plain VAE on a FASTA
   file. Use this script if you prefer not to run the Jupyter notebooks.
 - `tm_gp_prediction.py` – predicts protein melting temperatures using VAE
-  embeddings with a Gaussian Process regressor. Rows with missing sequences,
-  characters outside the model vocabulary, or sequences longer than the
-  configured maximum length are skipped.
-  embeddings with a Gaussian Process regressor. Any sequence that exceeds the
-  configured maximum length or contains characters outside the model
-  vocabulary is skipped.
-  embeddings with a Gaussian Process regressor.
+  embeddings with a Gaussian Process regressor. Sequences exceeding the maximum
+  length or containing invalid characters are skipped.
+- `encode_long_batch_example.py` – demonstrates encoding several long sequences at once.
+- `encode_batch_training_example.py` – trains a small MLP on embeddings obtained with `encode_batch`.
 
 
 Run any of these with Python to try them out, for example:
