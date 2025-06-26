@@ -2,7 +2,7 @@
 
 from .config import Config, load_config
 from .loader import load_vae
-from .encoder import encode, encode_batch
+from .encoder import encode, encode_batch, encode_long, encode_long_batch
 from .decoder import decode, decode_batch
 from .classes import SequenceDataset, Tokenizer
 from .utils import sequence_to_tensor, tensor_to_sequence, pad_collate
@@ -20,6 +20,8 @@ __all__ = [
     "load_vae",
     "encode",
     "encode_batch",
+    "encode_long",
+    "encode_long_batch",
     "decode",
     "decode_batch",
     "SequenceDataset",
