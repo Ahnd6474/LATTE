@@ -69,7 +69,16 @@ The resulting tensor `z` contains the latent representation of the sequence.
 For a more complete demonstration, see `usage_example.py` which
 shows encoding and decoding sequences from the command line.
 
-You can also encode sequences longer than 512 characters using `encode_long`, which returns a stack of latent vectors for overlapping windows.
+You can also encode sequences longer than 512 characters using `encode_long`,
+which returns a stack of latent vectors for overlapping windows. When dealing
+with multiple long sequences, call `encode_long_batch` to obtain a list of
+latent tensor stacks:
+
+```python
+long_sequences = ["MKTFFVLLL" * 100, "ACDEFGHIKLMNPQRSTVWY" * 50]
+embeddings = encode_long_batch(model, long_sequences, tokenizer, cfg.max_len,
+                               overlap=256)
+```
 ## Example Scripts
 
 Several convenience scripts are included in the repository:
