@@ -69,6 +69,7 @@ The resulting tensor `z` contains the latent representation of the sequence.
 For a more complete demonstration, see `usage_example.py` which
 shows encoding and decoding sequences from the command line.
 
+You can also encode sequences longer than 512 characters using `encode_long`, which returns a stack of latent vectors for overlapping windows.
 ## Example Scripts
 
 Several convenience scripts are included in the repository:
