@@ -69,7 +69,16 @@ The resulting tensor `z` contains the latent representation of the sequence.
 For a more complete demonstration, see `usage_example.py` which
 shows encoding and decoding sequences from the command line.
 
-You can also encode sequences longer than 512 characters using `encode_long`, which returns a stack of latent vectors for overlapping windows.
+You can also encode sequences longer than 512 characters using `encode_long`,
+which returns a stack of latent vectors for overlapping windows. When dealing
+with multiple long sequences, call `encode_long_batch` to obtain a list of
+latent tensor stacks:
+
+```python
+long_sequences = ["MKTFFVLLL" * 100, "ACDEFGHIKLMNPQRSTVWY" * 50]
+embeddings = encode_long_batch(model, long_sequences, tokenizer, cfg.max_len,
+                               overlap=256)
+```
 ## Example Scripts
 
 Several convenience scripts are included in the repository:
@@ -83,13 +92,12 @@ Several convenience scripts are included in the repository:
 - `train_baseline.py` – command-line tool for training a plain VAE on a FASTA
   file. Use this script if you prefer not to run the Jupyter notebooks.
 - `tm_gp_prediction.py` – predicts protein melting temperatures using VAE
-  embeddings with a Gaussian Process regressor. Rows with missing sequences,
-  characters outside the model vocabulary, or sequences longer than the
-  configured maximum length are skipped.
-  embeddings with a Gaussian Process regressor. Any sequence that exceeds the
-  configured maximum length or contains characters outside the model
-  vocabulary is skipped.
-  embeddings with a Gaussian Process regressor.
+  embeddings with a Gaussian Process regressor. Sequences exceeding the maximum
+  length or containing invalid characters are skipped.
+- `encode_long_batch_example.py` – demonstrates encoding several long sequences at once.
+- `encode_batch_training_example.py` – trains a small MLP on embeddings obtained
+  with `encode_batch`. The helper function `encode_sequences` now truncates
+  sequences longer than ``cfg.max_len`` by default.
 
 
 Run any of these with Python to try them out, for example:

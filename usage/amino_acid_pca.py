@@ -43,11 +43,36 @@ def load_sequences(
     return labels, sequences
 
 
-def encode_sequences(sequences: List[str], cfg: Config, tokenizer: Tokenizer, model) -> torch.Tensor:
-    """Encode sequences into latent vectors using the VAE model."""
-    # Truncate sequences longer than the configured maximum length
-    truncated = [s[: cfg.max_len] for s in sequences]
-    dataset = SequenceDataset(truncated, tokenizer, cfg.max_len)
+def encode_sequences(
+    sequences: List[str],
+    cfg: Config,
+    tokenizer: Tokenizer,
+    model,
+    *,
+    truncate: bool = True,
+) -> torch.Tensor:
+    """Encode sequences into latent vectors using the VAE model.
+
+    Parameters
+    ----------
+    sequences:
+        List of raw amino-acid sequences.
+    cfg:
+        Configuration object specifying ``max_len`` and ``batch_size``.
+    tokenizer:
+        Tokenizer instance matching the model vocabulary.
+    model:
+        Loaded VAE model.
+    truncate:
+        If ``True`` (default), sequences longer than ``cfg.max_len`` are
+        truncated; otherwise such sequences will raise
+        :class:`SequenceLengthError` during tensorization.
+    """
+
+    if truncate:
+        sequences = [s[: cfg.max_len] for s in sequences]
+
+    dataset = SequenceDataset(sequences, tokenizer, cfg.max_len)
     loader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
