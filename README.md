@@ -96,7 +96,11 @@ Several convenience scripts are included in the repository:
   length or containing invalid characters are skipped.
 - `encode_long_batch_example.py` – demonstrates encoding several long sequences at once.
 
-- `encode_batch_training_example.py` – trains a small MLP on embeddings obtained with `encode_batch`.
+- `encode_batch_training_example.py` – trains a small MLP on embeddings obtained
+  with `encode_batch`. The helper function `encode_sequences` now truncates
+  sequences longer than ``cfg.max_len`` by default.
+- `encode_long_batch_training_example.py` – trains the same MLP on long
+  sequences by first encoding them with `encode_long_batch`.
 
 
 
