@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 
+
 from vae_module import (
     Config,
     Tokenizer,

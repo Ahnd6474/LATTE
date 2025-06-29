@@ -46,12 +46,13 @@ dense_args = {
     "max_iter": 300,
     "random_state": 42,
 }
-```
+
 
 The equivalent PyTorch implementation used in `generate_submission.py`
 matches these settings.
 
 ## Supervised Models
+
 
 If you trained additional supervised models for the benchmark, place
 their checkpoints inside `protein_gym/supervised_models/`.
