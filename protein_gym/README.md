@@ -47,7 +47,7 @@ dense_args = {
     "random_state": 42,
 }
 
-
+```
 The equivalent PyTorch implementation used in `generate_submission.py`
 matches these settings.
 
