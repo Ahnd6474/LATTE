@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 
+
 from vae_module import (
     Config,
     Tokenizer,
@@ -34,6 +35,7 @@ class MLPRegressor(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
             torch.nn.Linear(64, 1),
+
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -63,6 +65,7 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
 
     dataset = TensorDataset(X_train, y_train)
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
+
 
     model.train()
     for _ in range(300):

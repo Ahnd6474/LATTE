@@ -48,9 +48,6 @@ dense_args = {
 }
 ```
 
-The equivalent PyTorch implementation used in `generate_submission.py`
-matches these settings.
-
 ## Supervised Models
 
 If you trained additional supervised models for the benchmark, place
