@@ -10,6 +10,8 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.stats import spearmanr
+from sklearn.preprocessing import StandardScaler
+
 
 from vae_module import (
     Config,
@@ -26,13 +28,14 @@ class MLPRegressor(torch.nn.Module):
     def __init__(self, in_dim: int) -> None:
         super().__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(in_dim, 256),
+            torch.nn.Linear(in_dim, 128),
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
-            torch.nn.Linear(256, 128),
+            torch.nn.Linear(128, 64),
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
-            torch.nn.Linear(128, 1),
+            torch.nn.Linear(64, 1),
+
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -48,14 +51,21 @@ def read_sequences(df: pd.DataFrame) -> List[str]:
 
 
 def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegressor:
-    X_train = z.to(device)
+    scaler = StandardScaler()
+    z_scaled = torch.tensor(scaler.fit_transform(z.cpu().numpy()), dtype=torch.float32)
+    X_train = z_scaled.to(device)
     y_train = y.to(device)
+
+    torch.manual_seed(42)
     model = MLPRegressor(X_train.size(1)).to(device)
-    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+    opt = torch.optim.Adam(
+        model.parameters(), lr=2.29e-4, weight_decay=9.17e-5
+    )
     loss_fn = torch.nn.MSELoss()
 
     dataset = TensorDataset(X_train, y_train)
-    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+    loader = DataLoader(dataset, batch_size=64, shuffle=True)
+
 
     model.train()
     for _ in range(300):
@@ -65,7 +75,7 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
             loss = loss_fn(pred, yb)
             loss.backward()
             opt.step()
-    return model
+    return model, scaler
 
 
 def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
@@ -85,10 +95,13 @@ def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.Dat
     with torch.no_grad():
         z = encode_batch(model, loader, tokenizer)
 
-    mlp = train_mlp(z, y, device=cfg.device)
+    mlp, scaler = train_mlp(z, y, device=cfg.device)
     mlp.eval()
+    z_scaled = torch.tensor(
+        scaler.transform(z.cpu().numpy()), dtype=torch.float32
+    ).to(cfg.device)
     with torch.no_grad():
-        preds = mlp(z.to(cfg.device)).cpu().numpy()
+        preds = mlp(z_scaled).cpu().numpy()
 
     rho = spearmanr(preds, y.numpy()).correlation
     print(f"{path.name}: Spearman rho={rho:.4f}")
