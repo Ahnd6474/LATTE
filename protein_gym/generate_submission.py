@@ -76,8 +76,6 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
             opt.step()
     return model, scaler
 
-
-
 def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
     df = pd.read_csv(path)
     seqs = read_sequences(df)
@@ -102,7 +100,6 @@ def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.Dat
     ).to(cfg.device)
     with torch.no_grad():
         preds = mlp(z_scaled).cpu().numpy()
-
 
     rho = spearmanr(preds, y.numpy()).correlation
     print(f"{path.name}: Spearman rho={rho:.4f}")

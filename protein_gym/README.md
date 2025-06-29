@@ -31,6 +31,8 @@ output directory containing the original sequence and the predicted
 score. These files can be zipped and uploaded to the leaderboard.
 
 
+## MLP Training Settings
+
 
 The prediction head is a two-layer MLP trained on the latent
 representations from ESMS VAE. Prior to training, the latent vectors are
@@ -47,12 +49,19 @@ dense_args = {
     "random_state": 42,
 }
 
-
+```
 The equivalent PyTorch implementation used in `generate_submission.py`
 matches these settings.
+
 
 
 If you trained additional supervised models for the benchmark, place
 their checkpoints inside `protein_gym/supervised_models/`.
 A short description of each model (architecture, training procedure,
 metrics) can be added to `supervised_models/README.md`.
+
+We also provide a baseline implementation in
+`protein_gym/baselines/ESMSVAE/`. The helper script
+`scripts/scoring_supervised_esmsvae.sh` shows how to download a
+checkpoint, install dependencies and evaluate all supervised assays
+with `scoring.py`.
