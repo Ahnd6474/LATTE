@@ -35,7 +35,6 @@ class MLPRegressor(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
             torch.nn.Linear(64, 1),
-
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -75,6 +74,7 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
             loss.backward()
             opt.step()
     return model, scaler
+
 
 def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
     df = pd.read_csv(path)

@@ -30,9 +30,7 @@ For every CSV file, a new file `<name>_pred.csv` will be written to the
 output directory containing the original sequence and the predicted
 score. These files can be zipped and uploaded to the leaderboard.
 
-
 ## MLP Training Settings
-
 
 The prediction head is a two-layer MLP trained on the latent
 representations from ESMS VAE. Prior to training, the latent vectors are
@@ -49,10 +47,11 @@ dense_args = {
     "random_state": 42,
 }
 
-```
+
 The equivalent PyTorch implementation used in `generate_submission.py`
 matches these settings.
 
+## Supervised Models
 
 
 If you trained additional supervised models for the benchmark, place
