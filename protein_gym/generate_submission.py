@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from scipy.stats import spearmanr
 from sklearn.preprocessing import StandardScaler
 
+
 from vae_module import (
     Config,
     Tokenizer,
@@ -34,6 +35,7 @@ class MLPRegressor(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Dropout(0.2),
             torch.nn.Linear(64, 1),
+
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -75,6 +77,7 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
     return model, scaler
 
 
+
 def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
     df = pd.read_csv(path)
     seqs = read_sequences(df)
@@ -99,6 +102,7 @@ def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.Dat
     ).to(cfg.device)
     with torch.no_grad():
         preds = mlp(z_scaled).cpu().numpy()
+
 
     rho = spearmanr(preds, y.numpy()).correlation
     print(f"{path.name}: Spearman rho={rho:.4f}")
