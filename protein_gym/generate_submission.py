@@ -66,7 +66,6 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
     dataset = TensorDataset(X_train, y_train)
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
 
-
     model.train()
     for _ in range(300):
         for xb, yb in loader:
@@ -76,7 +75,6 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
             loss.backward()
             opt.step()
     return model, scaler
-
 
 def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
     df = pd.read_csv(path)
