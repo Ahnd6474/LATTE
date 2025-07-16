@@ -2,7 +2,7 @@
 # ESMS‑VAE
 
 <p align="center">
-  <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics-green.svg?style=flat-square" alt="paper"></a>
+  <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics(TMD)-green.svg?style=flat-square" alt="paper"></a>
   <a href="https://github.com/Ahnd6474/ESMS-VAE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/ESMS-VAE?style=flat-square" alt="license"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
