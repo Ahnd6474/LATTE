@@ -24,7 +24,7 @@
 8. [Reproducing Paper Results](#reproducing-paper-results)
 9. [Benchmarks](#benchmarks)
 10. [Citation](#citation)
-11. [Availability and implementation](#Availability and implementation)
+11. [Availability and implementation](#Availability-and-implementation)
 12. [License](#license)
 
 ---
