@@ -8,7 +8,7 @@
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
 
-> **ESMS‑VAE** (*Evolutionary Scale Modeling Student VAE*) is a 5.5 M‑parameter transformer VAE that learns structure‑aware latent representations of proteins through a novel **structural loss**.  It reaches **97.17 %** reconstruction accuracy on UniRef50 sequences and surpasses prior VAEs on the ProteinGym benchmark (*ρ = 0.7779*).  Downstream tasks such as fluorescent‑protein classification (F1 = 0.99) and wavelength regression (RMSE ≈ 3 nm) confirm its practical utility.
+> **ESMS‑VAE** (*Evolutionary Scale Modeling Student VAE*) is a 5.5 M‑parameter transformer VAE that learns structure‑aware latent representations of proteins through a novel **structural loss**.  It reaches **97.17 %** reconstruction accuracy on UniRef50 sequences and surpasses prior VAEs on the ProteinGym benchmark(Supervised) (*ρ = 0.689*).  Downstream tasks such as fluorescent‑protein classification (F1 = 0.99) and wavelength regression (RMSE ≈ 3 nm) confirm its practical utility.
 
 ---
 
@@ -107,11 +107,11 @@ The scripts will output a CSV matching Table S2 of the paper.
 
 | Task | Dataset | Metric | ESMS‑VAE | Previous SOTA |
 |------|---------|--------|---------:|--------------:|
-| Reconstruction | UniRef50 test | % accurate | **97.17** | 95.2 (ProT‑VAE) |
-| Mutational effect | ProteinGym (217) | Spearman ρ | **0.7779** | 0.698 (Kermut) |
-| FP vs non‑FP | FPbase | 5‑fold Acc | **0.987** | 0.962 (ProseCNN) |
-| λabs | FPbase | RMSE (nm) | **2.70** | 6.1 |
-| λem | FPbase | RMSE (nm) | **3.80** | 8.0 |
+| Reconstruction | UniRef50 test | % accurate | **97.17** |-|
+| Mutational effect | ProteinGym (162/217) | Spearman ρ | **0.7779**/**0.689** | 0.698/0.657 (Kermut) |
+| FP vs non‑FP | FPbase | 5‑fold Acc | **0.987** |-|
+| λabs | FPbase | RMSE (nm) | **2.70** |-|
+| λem | FPbase | RMSE (nm) | **3.80** |-|
 
 ---
 
