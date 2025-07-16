@@ -26,7 +26,7 @@
 10. [Citation](#citation)
 11. [Availability and implementation](#Availability-and-implementation)
 12. [License](#license)
-
+13. [Content](#Content)
 ---
 
 ### Features
@@ -192,6 +192,10 @@ A snapshot of the exact version used in the manuscript, together with model chec
 
 The code and pre‑trained models are licensed for **non‑commercial research use only**.  
 See the accompanying [LICENSE](LICENSE) file for the full terms.
+
+### Content
+
+For questions or to report security issues, please email ahnd6474@gmail.com.
 
 ---
 
