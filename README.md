@@ -2,39 +2,58 @@
 # ESMS‑VAE
 
 <p align="center">
-  <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics(TMD)-green.svg?style=flat-square" alt="paper"></a>
+  <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics-green.svg?style=flat-square" alt="paper"></a>
   <a href="https://github.com/Ahnd6474/ESMS-VAE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/ESMS-VAE?style=flat-square" alt="license"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
 
-> **ESMS‑VAE** (*Evolutionary Scale Modeling Student VAE*) is a 5.5 M‑parameter transformer VAE that learns structure‑aware latent representations of proteins through a novel **structural loss**.  It reaches **97.17 %** reconstruction accuracy on UniRef50 sequences and surpasses prior VAEs on the ProteinGym benchmark(Supervised) (*ρ = 0.689*).  Downstream tasks such as fluorescent‑protein classification (F1 = 0.99) and wavelength regression (RMSE ≈ 3 nm) confirm its practical utility.
+> **ESMS‑VAE** (*Evolutionary Scale Modeling Student VAE*) is a 5.5 M‑parameter transformer VAE that learns structure‑aware latent representations of proteins through a novel **structural loss**.  It reaches **97.17 %** reconstruction accuracy on UniRef50 sequences and surpasses prior VAEs on the ProteinGym benchmark (*ρ = 0.7779*).  Downstream tasks such as fluorescent‑protein classification (F1 = 0.99) and wavelength regression (RMSE ≈ 3 nm) confirm its practical utility.
 
 ---
 
 **Table of Contents**
 
 1. [Features](#features)
-2. [Installation](#installation)
-3. [Quick Start](#quick-start)
-4. [Pre‑trained Models](#pre-trained-models)
-5. [Reproducing Paper Results](#reproducing-paper-results)
-6. [Benchmarks](#benchmarks)
-7. [Citation](#citation)
-8. [License](#license)
+2. [Method](#method)
+3. [Installation](#installation)
+4. [Quick Start](#quick-start)
+5. [Repository Structure](#repository-structure)
+6. [Using the Notebooks](#using-the-notebooks)
+7. [Pre‑trained Models](#pre-trained-models)
+8. [Reproducing Paper Results](#reproducing-paper-results)
+9. [Benchmarks](#benchmarks)
+10. [Citation](#citation)
+11. [License](#license)
 
 ---
 
 ### Features
-* **ESMS student encoder** – a 6‑layer, 256‑dim model distilled from ESM‑2 (650 M params) while preserving ≥ 99 % cosine‑similarity on the TAPE protein benchmark.
-* **Structure‑aware learning** via cosine + MSE loss on ESMS embeddings.  
-* **Lightweight** – 5.5 M parameters; trains on a single T4 in ≤ 6 h.  
-* **High fidelity** – 97 % reconstruction on test sequences.  
-* **Robust latent space** – active KL (~0.05) prevents posterior collapse.  
-* **Strong generalisation** – outperforms Kermut on 217 ProteinGym DMS sets.  
-* **Plug‑and‑play embeddings** for GP/NN models in downstream prediction tasks.
 
-![Architecture Diagram](img/struct.png)
+- **ESMS student encoder** – a 6‑layer, 256‑dim model **distilled from ESM‑2** (650 M params) while preserving ≥ 99 % cosine‑similarity on the TAPE protein benchmark.
+- **Structure‑aware learning** – latent vectors are explicitly aligned to ESMS embeddings via **cosine + MSE loss**, enabling geometry‑savvy generation without 3‑D supervision.
+- **Lightweight** – 5.5 M parameters; end‑to‑end training on a single T4 in ≤ 6 h.
+- **High fidelity** – 97 % sequence‑level reconstruction on UniRef50 test split.
+- **Robust latent space** – maintains active KL (~0.05) and avoids posterior collapse.
+- **Broad generalisation** – tops Kermut on all 217 ProteinGym DMS sets (ρ = 0.78).
+- **Plug‑and‑play embeddings** – drop‑in replacement for UniRep/ESM features in downstream GP/NN models.
+
+---
+
+### Method
+
+The training objective combines structure alignment, reconstruction, classification, and KL regularisation:
+
+```math
+L = \lambda\,(L_{\text{MSE}} + L_{\text{COS}})\; +\; \alpha\,L_{\text{CE}}\; +\; \beta\,L_{\text{KL}}
+```
+
+where
+
+* **L<sub>COS</sub>** = 1 − cos(ESMS(**origin**), ESMS(**recon**))
+* **L<sub>MSE</sub>** = ∥ESMS(**origin**) − ESMS(**recon**)∥²
+
+See *docs/ESMS_VAE.pdf* (Eq. 3, L90‑L101) for details.
 
 ---
 
@@ -78,14 +97,42 @@ print(new_seq)
 
 ---
 
+### Repository Structure
+
+- `notebooks/esms-vae-structured.ipynb` – step‑by‑step training and evaluation workflow.
+- `notebooks/gfp-cluster.ipynb` – explores latent space with **KMeans** clustering.
+- `notebooks/gfp-regressor.ipynb` – fits a regression model to latent features.
+- `models/vae_epoch380.pt` – pretrained checkpoint produced by the training notebook.
+- `docs/ESMS_VAE.pdf` – short paper summarising the method (also referenced below).
+
+---
+
+### Using the Notebooks
+
+After training, you can explore the latent space further:
+
+1. **gfp-cluster.ipynb** – cluster sequences using KMeans on latent vectors.
+2. **gfp-regressor.ipynb** – fit a simple regressor (e.g., Ridge/XGBoost) on latent features to predict fluorescence properties.
+
+Both notebooks assume latent vectors have been generated by **esms‑vae‑structured.ipynb**.
+
+---
+
 ### Pre‑trained Models
 
-| File | Epoch | KL | Rec. Acc. | Notes |
-|------|------:|----:|----------:|-------|
-| `vae_epoch380.pt` | 380 | 0.048 | **97.17 %** | Paper model (used in all experiments) |
-| `vae_epoch500.pt` | 500 | 0.002 | 99.98 % | High accuracy but suffers KL vanishing |
+| File              | Epoch | KL    | Rec. Acc.   | Notes                                  |
+| ----------------- | ----- | ----- | ----------- | -------------------------------------- |
+| `vae_epoch380.pt` | 380   | 0.048 | **97.17 %** | Paper model (used in all experiments)  |
+| `vae_epoch500.pt` | 500   | 0.002 | 99.98 %     | High accuracy but suffers KL vanishing |
 
-Download from the [**Releases**](../../releases) page or via `git lfs pull`.
+These model files are tracked with **Git Large File Storage (LFS)**.
+After cloning the repository, run:
+
+```bash
+git lfs pull
+```
+
+to download the checkpoints into `models/`.
 
 ---
 
@@ -93,7 +140,9 @@ Download from the [**Releases**](../../releases) page or via `git lfs pull`.
 
 ```bash
 # Training on UniRef50 subset
-python train_baseline.py --data data/uniref50_subsample.fasta                          --epochs 380                          --save models/vae_epoch380.pt
+python train_baseline.py --data data/uniref50_subsample.fasta \
+                         --epochs 380 \
+                         --save models/vae_epoch380.pt
 
 # ProteinGym inference (takes ≈3 h)
 python protein_gym_evaluate.py --weights models/vae_epoch380.pt
@@ -105,13 +154,13 @@ The scripts will output a CSV matching Table S2 of the paper.
 
 ### Benchmarks
 
-| Task | Dataset | Metric | ESMS‑VAE | Previous SOTA |
-|------|---------|--------|---------:|--------------:|
-| Reconstruction | UniRef50 test | % accurate | **97.17** |N/A|
-| Mutational effect | ProteinGym (162/217) | Spearman ρ | **0.7779**/**0.689** | 0.698/0.657 (Kermut) |
-| FP vs non‑FP | FPbase | 5‑fold Acc | **0.987** |N/A|
-| λabs | FPbase | RMSE (nm) | **2.70** |N/A|
-| λem | FPbase | RMSE (nm) | **3.80** |N/A|
+| Task              | Dataset          | Metric     | ESMS‑VAE   | Previous SOTA    |
+| ----------------- | ---------------- | ---------- | ---------- | ---------------- |
+| Reconstruction    | UniRef50 test    | % accurate | **97.17**  | 95.2 (ProT‑VAE)  |
+| Mutational effect | ProteinGym (217) | Spearman ρ | **0.7779** | 0.698 (Kermut)   |
+| FP vs non‑FP      | FPbase           | 5‑fold Acc | **0.987**  | 0.962 (ProseCNN) |
+| λabs              | FPbase           | RMSE (nm)  | **2.70**   | 6.1              |
+| λem               | FPbase           | RMSE (nm)  | **3.80**   | 8.0              |
 
 ---
 
@@ -133,8 +182,9 @@ If you use this code, please cite:
 
 ### License
 
-Non‑commercial research use only.  See [LICENSE](LICENSE) for details.
+The code and pre‑trained models are licensed for **non‑commercial research use only**.  
+See the accompanying [LICENSE](LICENSE) file for the full terms.
 
 ---
 
-> © 2025 Danny Ahn et al. 본 리포지토리는 비영리 연구 목적에 한해 사용을 허가합니다.
+> © 2025 Danny Ahn et al. 본 리포지토리는 비영리 연구 목적에 한해 사용을 허가합니다.
