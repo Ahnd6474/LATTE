@@ -107,11 +107,11 @@ The scripts will output a CSV matching Table S2 of the paper.
 
 | Task | Dataset | Metric | ESMS‑VAE | Previous SOTA |
 |------|---------|--------|---------:|--------------:|
-| Reconstruction | UniRef50 test | % accurate | **97.17** |-|
+| Reconstruction | UniRef50 test | % accurate | **97.17** |N/A|
 | Mutational effect | ProteinGym (162/217) | Spearman ρ | **0.7779**/**0.689** | 0.698/0.657 (Kermut) |
-| FP vs non‑FP | FPbase | 5‑fold Acc | **0.987** |-|
-| λabs | FPbase | RMSE (nm) | **2.70** |-|
-| λem | FPbase | RMSE (nm) | **3.80** |-|
+| FP vs non‑FP | FPbase | 5‑fold Acc | **0.987** |N/A|
+| λabs | FPbase | RMSE (nm) | **2.70** |N/A|
+| λem | FPbase | RMSE (nm) | **3.80** |N/A|
 
 ---
 
