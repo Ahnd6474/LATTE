@@ -193,6 +193,27 @@ A snapshot of the exact version used in the manuscript, together with model chec
 The code and pre‑trained models are licensed for **non‑commercial research use only**.  
 See the accompanying [LICENSE](LICENSE) file for the full terms.
 
+## License
+
+This project is licensed under the **[Your Project Name] Non-Commercial License**.  
+See `LICENSE` for details.
+
+### Third-Party Components
+
+This project includes open-source components under the following licenses:
+
+| Component     | License      | Source |
+|---------------|--------------|--------|
+| scikit-learn  | BSD 3-Clause | https://scikit-learn.org |
+| PyTorch       | BSD-style    | https://pytorch.org |
+| fpbase        | MIT          | https://github.com/fpbase/fpbase |
+| fair-esm      | MIT          | https://github.com/facebookresearch/esm |
+| biopython     | Biopython License | https://biopython.org |
+| tqdm          | MPL 2.0      | https://github.com/tqdm/tqdm |
+| UniRef50      | CC BY 4.0    | https://www.uniprot.org/help/uniref |
+
+Each license text is included in the `LICENSES/` folder or linked above.
+
 ### Contact
 <p>Contact: <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a></p>
 ---
