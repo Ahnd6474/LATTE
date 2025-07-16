@@ -178,6 +178,12 @@ If you use this code, please cite:
   doi={10.1093/bioinformatics/btzXXX}
 }
 ```
+### Availability and implementation
+
+ESMS‑VAE (source code and pre‑trained models) is **freely available for non‑commercial research and educational use** at this GitHub repository under the *ESMS‑VAE Non‑Commercial Research License v1.1*.  
+**Commercial use requires prior written permission from the investor “안성톱밥”.**
+
+A snapshot of the exact version used in the manuscript, together with model checkpoints and test data, will be archived on Zenodo at the time of submission and referenced by a DOI.
 
 ---
 
