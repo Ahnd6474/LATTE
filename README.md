@@ -194,9 +194,5 @@ The code and pre‑trained models are licensed for **non‑commercial research u
 See the accompanying [LICENSE](LICENSE) file for the full terms.
 
 ### Contact
-
-For questions or to report security issues, please email ahnd6474@gmail.com.
-
+<p>Contact: <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a></p>
 ---
-
-> © 2025 Danny Ahn et al. 본 리포지토리는 비영리 연구 목적에 한해 사용을 허가합니다.
