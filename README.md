@@ -26,7 +26,7 @@
 ---
 
 ### Features
-
+* **ESMS student encoder** – a 6‑layer, 256‑dim model distilled from ESM‑2 (650 M params) while preserving ≥ 99 % cosine‑similarity on the TAPE protein benchmark.
 * **Structure‑aware learning** via cosine + MSE loss on ESMS embeddings.  
 * **Lightweight** – 5.5 M parameters; trains on a single T4 in ≤ 6 h.  
 * **High fidelity** – 97 % reconstruction on test sequences.  
