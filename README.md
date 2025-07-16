@@ -32,7 +32,7 @@
 
 - **ESMS student encoder** – a 6‑layer, 256‑dim model **distilled from ESM‑2** (650 M params) while preserving ≥ 99 % cosine‑similarity
 - **Structure‑aware learning** – latent vectors are explicitly aligned to ESMS embeddings via **cosine + MSE loss**, enabling geometry‑savvy generation without 3‑D supervision.
-- **Lightweight** – 5.5 M parameters; end‑to‑end training on a single T4 in ≤ 6 h.
+- **Lightweight** – 5.5 M parameters; end‑to‑end training on a double T4 in ≤ 6 h.
 - **High fidelity** – 97 % sequence‑level reconstruction on UniRef50 test split.
 - **Robust latent space** – maintains active KL (~0.05) and avoids posterior collapse.
 - **Broad generalisation** – tops Kermut on all 162/217 ProteinGym DMS sets (ρ = 0.78/0.69).
@@ -164,7 +164,7 @@ The scripts will output a CSV matching Table S2 of the paper.
 
 ---
 ### Limitations
-Maximum sequence length 512. The model and tokeniser were configured with max_len = 512 to fit on a single‑GPU setup. For proteins longer than 512 residues we split each sequence into non‑overlapping 512‑aa chunks before encoding/decoding.\n- This chunking hurts mutational‑effect performance: on the 55 ProteinGym datasets containing sequences > 512 aa the Spearman correlation drops to 0.427, whereas on the other 162 datasets (≤ 512 aa) the model reaches 0.7779.\n- Future work: adopt sliding‑window or sparse attention to support arbitrarily long proteins without losing global context.\n\n---"}]}
+Maximum sequence length 512. The model and tokeniser were configured with max_len = 512 to fit on a doulbe-GPU setup. For proteins longer than 512 residues we split each sequence into non‑overlapping 512‑aa chunks before encoding/decoding.\n- This chunking hurts mutational‑effect performance: on the 55 ProteinGym datasets containing sequences > 512 aa the Spearman correlation drops to 0.427, whereas on the other 162 datasets (≤ 512 aa) the model reaches 0.7779.\n- Future work: adopt sliding‑window or sparse attention to support arbitrarily long proteins without losing global context.\n\n---"}]}
 ### Citation
 
 If you use this code, please cite:
