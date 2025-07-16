@@ -1,0 +1,90 @@
+license_content = """
+ESMS‑VAE Non‑Commercial Research License v1.1
+============================================
+
+Copyright (c) 2025
+Danny Ahn, Minjae Lee, Shihyun Moon, Jooyoung Jung
+All rights reserved.
+
+
+1.  Permission Grant
+--------------------
+Subject to your compliance with the terms below, you are hereby granted a
+royalty‑free, non‑exclusive, non‑transferable licence to:
+
+  • use, copy, and modify the ESMS‑VAE source code, model checkpoints,
+    and accompanying documentation (the “Software”);
+
+  • publish or redistribute modified or unmodified copies of the Software
+    **solely for non‑commercial academic research and educational purposes**,  
+    provided that each copy retains this licence and the following citation:
+
+        Ahn D et al.  *ESMS VAE: A Structure‑Informed Variational
+        Autoencoder for Protein Engineering.*  Bioinformatics, 2025.
+        DOI: 10.1093/bioinformatics/btzXXX
+
+
+2.  Restrictions
+----------------
+The rights granted in §1 explicitly exclude, **without limitation**:
+
+  • any use of the Software, or any derivative work, **for commercial
+    advantage or monetary compensation** **unless prior written permission
+    is obtained from the investor “안성톱밥”.**
+
+    ⇒ 상업적 활용(컨설팅, SaaS, 제품 통합, 유료 계약 연구 등)을 원할 경우
+       투자자인 **안성톱밥**에게 별도 승인을 받아야 합니다.
+
+  • sublicensing, selling, leasing, or otherwise distributing the Software
+    under terms that permit commercial use without said permission;
+
+  • removal or alteration of copyright notices, licence terms, or required
+    citations.
+
+
+3.  Redistributing Model Checkpoints
+------------------------------------
+Pre‑trained weights (`models/vae_epoch*.pt`) are distributed via Git LFS.
+If you redistribute these files, you must:
+
+  • keep them under the same directory names;
+  • include this licence file alongside the weights;
+  • refrain from charging any fee other than reasonable distribution costs.
+
+
+4.  Disclaimer of Warranty
+--------------------------
+THE SOFTWARE IS PROVIDED **“AS IS”**, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON‑INFRINGEMENT.  IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+
+5.  Termination
+---------------
+Any breach of this licence automatically terminates the rights granted in
+§1.  Upon termination you must destroy all copies of the Software in your
+possession or control.
+
+
+6.  Governing Law
+-----------------
+This licence shall be governed by and construed in accordance with the laws
+of the Republic of Korea, without regard to its conflict‑of‑law provisions.
+
+
+(한국어 요약)
+-------------
+본 소프트웨어는 **비영리 학술 연구 및 교육** 목적으로만 자유롭게 사용할 수
+있으며, **상업적 이용**(컨설팅·SaaS·제품 판매 등)을 원할 경우 투자자인
+**안성톱밥**의 서면 승인을 선행적으로 받아야 합니다. 모든 복제본에는 본
+라이선스와 논문 인용 문구를 포함해야 합니다. 저자 및 권리자는 소프트웨어에
+대한 어떠한 보증도 제공하지 않으며, 사용으로 인한 손해에 대해 책임지지
+않습니다.
+"""
+with open('/mnt/data/LICENSE', 'w', encoding='utf-8') as f:
+    f.write(license_content)
+print("Updated LICENSE saved")
