@@ -198,21 +198,18 @@ See the accompanying [LICENSE](LICENSE) file for the full terms.
 This project is licensed under the **[Your Project Name] Non-Commercial License**.  
 See `LICENSE` for details.
 
-### Third-Party Components
+### Third‑Party Components
 
-This project includes open-source components under the following licenses:
+| Component     | License                      | License Text                          |
+|--------------|-----------------------------|---------------------------------------|
+| scikit‑learn | BSD 3‑Clause                | [third_party/licenses/scikit‑learn-BSD-3-Clause.txt] |
+| PyTorch      | BSD 3‑Clause (Modified BSD) | [third_party/licenses/pytorch-BSD-3-Clause.txt]      |
+| fpbase       | GPL 3.0                     | [third_party/licenses/fpbase-GPL-3.0.txt]            |
+| esm‑2        | MIT                         | [third_party/licenses/esm-2-MIT.txt]                |
+| biopython    | Biopython License           | [third_party/licenses/Biopython_LICENSE.rst]         |
+| tqdm         | MPL 2.0                     | [third_party/licenses/tqdm-MPL-2.0.txt]             |
+| UniRef50     | CC BY 4.0                   | https://creativecommons.org/licenses/by/4.0/        |
 
-| Component     | License      | Source |
-|---------------|--------------|--------|
-| scikit-learn  | BSD 3-Clause | https://scikit-learn.org |
-| PyTorch       | BSD-style    | https://pytorch.org |
-| fpbase        | MIT          | https://github.com/fpbase/fpbase |
-| fair-esm      | MIT          | https://github.com/facebookresearch/esm |
-| biopython     | Biopython License | https://biopython.org |
-| tqdm          | MPL 2.0      | https://github.com/tqdm/tqdm |
-| UniRef50      | CC BY 4.0    | https://www.uniprot.org/help/uniref |
-
-Each license text is included in the `LICENSES/` folder or linked above.
 
 ### Contact
 <p>Contact: <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a></p>
