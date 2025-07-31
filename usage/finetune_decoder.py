@@ -14,7 +14,6 @@ from vae_module import (
     SequenceDataset,
     pad_collate,
     decode_batch,
-    sequence_to_tensor,
 )
 
 # ---- Configuration ----
@@ -89,6 +88,30 @@ def forward_noisy(model, x, mask, noise_prob: float, vocab_size: int):
     return logits, mu, logvar
 
 
+def _split_tokens(seq: str) -> List[str]:
+    """Split a generated sequence string back into tokens."""
+    tokens: List[str] = []
+    i = 0
+    while i < len(seq):
+        if seq[i] == "<":
+            j = seq.find(">", i)
+            if j == -1:
+                break
+            tokens.append(seq[i : j + 1])
+            i = j + 1
+        else:
+            tokens.append(seq[i])
+            i += 1
+    return tokens
+
+
+def tokens_to_tensor(tokens: List[str], tokenizer: Tokenizer, max_len: int) -> torch.Tensor:
+    ids = [tokenizer.get_idx(tok) for tok in tokens if tok in tokenizer.tok_to_idx]
+    if len(ids) > max_len:
+        ids = ids[:max_len]
+    return torch.tensor(ids, dtype=torch.long)
+
+
 def evaluate(model, loader, tokenizer, max_len: int) -> float:
     model.eval()
     device = next(model.parameters()).device
@@ -110,9 +133,12 @@ def evaluate(model, loader, tokenizer, max_len: int) -> float:
                 truncate_lens=mask.sum(1).tolist(),
             )
             for seq_pred, xt, m in zip(sequences, x, mask):
-                pred_ids = sequence_to_tensor(seq_pred, tokenizer, max_len)
+                tokens = _split_tokens(seq_pred)
+                if tokens and tokens[0] == tokenizer.bos_token:
+                    tokens = tokens[1:]
+                pred_ids = tokens_to_tensor(tokens, tokenizer, max_len).to(device)
                 L = int(m.sum().item())
-                correct += (pred_ids[:L].to(device) == xt[:L]).sum().item()
+                correct += (pred_ids[:L] == xt[:L]).sum().item()
                 total += L
     return correct / total * 100 if total > 0 else 0.0
 
