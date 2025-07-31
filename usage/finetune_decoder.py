@@ -1,5 +1,6 @@
 from typing import List
 import os
+import random
 
 import torch
 import torch.optim as optim
@@ -19,14 +20,15 @@ from vae_module import (
 # ---- Configuration ----
 
 # Update these paths and settings as needed before running the script.
-DATA_PATH = "data/train_sequences.fasta"
+DATA_PATH = "/kaggle/input/uniref50-sub/uniref50_subsample.fasta"
 CHECKPOINT_PATH = "models/vae_epoch380.pt"
 EPOCHS = 10
 LR = 1e-4
 BATCH_SIZE = 64
-NOISE_PROB = 0.1
+NOISE_PROB = 0.2
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-OUTPUT_DIR = "finetuned"
+OUTPUT_DIR = "/kaggle/working/finetuned"
+
 MAX_LEN = 512
 
 
@@ -47,6 +49,14 @@ def read_fasta(path: str) -> List[str]:
         if seq:
             sequences.append(seq)
     return sequences
+
+
+def random_sample(seqs: List[str], k: int) -> List[str]:
+    """Return a random subset of sequences of size ``k``."""
+    if len(seqs) <= k:
+        return list(seqs)
+    return random.sample(seqs, k)
+
 
 
 def add_noise(tokens: torch.Tensor, prob: float, vocab_size: int, pad_idx: int) -> torch.Tensor:
@@ -112,6 +122,7 @@ def tokens_to_tensor(tokens: List[str], tokenizer: Tokenizer, max_len: int) -> t
     return torch.tensor(ids, dtype=torch.long)
 
 
+
 def evaluate(model, loader, tokenizer, max_len: int) -> float:
     model.eval()
     device = next(model.parameters()).device
@@ -156,8 +167,10 @@ def main() -> None:
     for p in model.encoder.parameters():
         p.requires_grad = False
 
-    dataset = SequenceDataset(read_fasta(DATA_PATH), tokenizer, MAX_LEN)
-    train_size = int(len(dataset) * 0.9)
+    sequences = random_sample(read_fasta(DATA_PATH), 300000)
+    dataset = SequenceDataset(sequences, tokenizer, MAX_LEN)
+    train_size = int(len(dataset) * 0.8)
+
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
     train_loader = DataLoader(
