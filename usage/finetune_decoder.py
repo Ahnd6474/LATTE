@@ -15,6 +15,7 @@ from vae_module import (
     SequenceDataset,
     pad_collate,
     decode_batch,
+    sequence_to_tensor,
 )
 
 # ---- Configuration ----
@@ -28,6 +29,7 @@ BATCH_SIZE = 64
 NOISE_PROB = 0.2
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 OUTPUT_DIR = "/kaggle/working/finetuned"
+
 MAX_LEN = 512
 
 
@@ -55,6 +57,7 @@ def random_sample(seqs: List[str], k: int) -> List[str]:
     if len(seqs) <= k:
         return list(seqs)
     return random.sample(seqs, k)
+
 
 
 def add_noise(tokens: torch.Tensor, prob: float, vocab_size: int, pad_idx: int) -> torch.Tensor:
@@ -120,6 +123,7 @@ def tokens_to_tensor(tokens: List[str], tokenizer: Tokenizer, max_len: int) -> t
     return torch.tensor(ids, dtype=torch.long)
 
 
+
 def evaluate(model, loader, tokenizer, max_len: int) -> float:
     model.eval()
     device = next(model.parameters()).device
@@ -147,6 +151,7 @@ def evaluate(model, loader, tokenizer, max_len: int) -> float:
                 pred_ids = tokens_to_tensor(tokens, tokenizer, max_len).to(device)
                 L = int(m.sum().item())
                 correct += (pred_ids[:L] == xt[:L]).sum().item()
+
                 total += L
     return correct / total * 100 if total > 0 else 0.0
 
@@ -167,6 +172,7 @@ def main() -> None:
     sequences = random_sample(read_fasta(DATA_PATH), 300000)
     dataset = SequenceDataset(sequences, tokenizer, MAX_LEN)
     train_size = int(len(dataset) * 0.8)
+
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
     train_loader = DataLoader(
