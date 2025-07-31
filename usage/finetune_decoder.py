@@ -15,7 +15,6 @@ from vae_module import (
     SequenceDataset,
     pad_collate,
     decode_batch,
-    sequence_to_tensor,
 )
 
 # ---- Configuration ----
@@ -151,7 +150,6 @@ def evaluate(model, loader, tokenizer, max_len: int) -> float:
                 pred_ids = tokens_to_tensor(tokens, tokenizer, max_len).to(device)
                 L = int(m.sum().item())
                 correct += (pred_ids[:L] == xt[:L]).sum().item()
-
                 total += L
     return correct / total * 100 if total > 0 else 0.0
 
