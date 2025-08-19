@@ -17,7 +17,7 @@
 
 1. [Features](#features)
 2. [Method](#method)
-3. [ESM‑VAE at a glance (diagram)](#esmvae-at-a-glance-diagram)
+3. [ESM‑VAE structure diagram](#ESM‑VAE-structure-diagram)
 4. [Installation](#installation)
 5. [Quick Start](#quick-start)
 6. [Repository Structure](#repository-structure)
@@ -63,35 +63,8 @@ dropping MSE and warming up $\\lambda$ to stabilize stochastic rollouts (K ≈ 6
 
 ---
 
-## ESM‑VAE at a glance (diagram)
-
-> The following Mermaid diagram renders on GitHub and summarizes the training signal flow.
-
-```mermaid
-flowchart LR
-  subgraph Encoder-Decoder VAE
-    A["Input sequence x"] --> B["Transformer Encoder"]
-    B --> Z["Latent z ~ q(z|x)"]
-    Z --> C["Transformer Decoder"]
-    C --> Xtilde["Reconstruction x~"]
-  end
-
-  %% Perceptual loss using pretrained ESM-2 embeddings
-  A -. ESM-2 embeddings .-> D["ESM2(x)"]
-  Xtilde -. ESM-2 embeddings .-> E["ESM2(x~)"]
-  D & E --> G["Structural loss L_COS (+ optional L_MSE)"]
-
-  %% Other losses
-  C --> CE["Cross-Entropy loss"]
-  Z --> KL["KL loss"]
-
-  %% Optim objective
-  G & CE & KL --> OBJ["Minimize: CE + β·KL + λ·L_COS (+ L_MSE in phase-1)"]
-```
-
-If you prefer a static image instead, place a PNG at `docs/figs/esm_vae_overview.png` and GitHub will show:
-
-![ESM‑VAE overview](docs/figs/esm_vae_overview.png)
+## ESM‑VAE structure diagram
+![ESM‑VAE overview](https://github.com/Ahnd6474/ESM-VAE/blob/main/img/struct.png)
 
 ---
 
