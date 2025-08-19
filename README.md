@@ -178,8 +178,11 @@ Code, pretrained weights, and datasets: **https://github.com/Ahnd6474/ESM-VAE**.
 ---
 
 ## License
+The ESM‑VAE code and models are released under the [Business Source License 1.1](LICENSE).
 
-See [LICENSE](LICENSE) for full terms.
+Third‑party components are distributed under their respective licenses (Biopython License, MIT, BSD-3-Clause, MPL-2.0); the full texts are provided in `third-party/licenses`.
+
+No GPL‑licensed code from FPbase is included in this repository.
 
 ---
 
