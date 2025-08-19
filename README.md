@@ -13,31 +13,22 @@
 
 **Table of Contents**
 
-1. [What’s new vs. earlier drafts](#whats-new-vs-earlier-drafts)
-2. [Features](#features)
-3. [Method](#method)
-4. [Installation](#installation)
-5. [Quick Start](#quick-start)
-6. [Repository Structure](#repository-structure)
-7. [Pre‑trained Models](#pre-trained-models)
-8. [Reproducing Paper Results](#reproducing-paper-results)
-9. [Benchmarks](#benchmarks)
-10. [Citation](#citation)
-11. [Availability and implementation](#availability-and-implementation)
-12. [License](#license)
-13. [Contact](#contact)
+1. [Features](#features)
+2. [Method](#method)
+3. [Installation](#installation)
+4. [Quick Start](#quick-start)
+5. [Repository Structure](#repository-structure)
+6. [Pre‑trained Models](#pre-trained-models)
+7. [Reproducing Paper Results](#reproducing-paper-results)
+8. [Benchmarks](#benchmarks)
+9. [Citation](#citation)
+10. [Availability and implementation](#availability-and-implementation)
+11. [License](#license)
+12. [Contact](#contact)
 
 ---
 
-## What’s new vs. earlier drafts
 
-- Project name unified to **ESM‑VAE** (formerly “ESMS‑VAE”).  
-- **No distillation claim**: we do **not** train a student of ESM‑2. We **use pretrained ESM‑2 embeddings** only for the structural (perceptual) loss.  
-- Terminology standardized across code/docs to “**pretrained ESM‑2 embeddings**”.  
-- Compute statement updated: **trained ~1 day on a single H200 (NVL) GPU**.  
-- Links fixed to: **https://github.com/Ahnd6474/ESM-VAE**.
-
----
 
 ## Features
 
