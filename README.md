@@ -157,7 +157,7 @@ python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 
 ## Citation
 
-If you use this code, please cite:
+If you use this code, please cite the following entry (also available in [`reference.bib`](reference.bib)):
 
 ```bibtex
 @article{ahn2025esmvae,
@@ -179,7 +179,26 @@ Code, pretrained weights, and datasets: **https://github.com/Ahnd6474/ESM-VAE**.
 
 ## License
 
-See [LICENSE](LICENSE) for full terms.
+ESM-VAE is distributed under the [ESMS‑VAE Business Source License v1.1](LICENSE).
+
+Key points:
+
+- **Non-commercial use only** – research and educational use is permitted; commercial use requires written permission from the investor "안성톱밥".
+- **Citation required** – any redistribution must include the following reference (also in [`reference.bib`](reference.bib)):
+
+```bibtex
+@article{ahn2025esmvae,
+  title={ESM VAE: A Structure-Informed Variational Autoencoder for Sequence Embedding and De Novo Protein Generation},
+  author={Ahn, Danny and Lee, Minjae and Moon, Shihyun and Jung, Jooyoung},
+  journal={Bioinformatics},
+  year={2025},
+  doi={10.1093/bioinformatics/btzXXX}
+}
+```
+
+- **Model checkpoint redistribution** – retain original directory names, include this licence file, and do not charge beyond reasonable distribution costs.
+
+Third-party dependencies and their licences are listed in [`third-party/licenses/README.md`](third-party/licenses/README.md).
 
 ---
 
