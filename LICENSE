@@ -49,3 +49,15 @@ Any breach of this licence automatically terminates the rights granted in §1. U
 Governing Law
 
 This licence shall be governed by and construed in accordance with the laws of the Republic of Korea, without regard to its conflict‑of‑law provisions.
+
+Third-Party Software
+
+This project uses third-party components released under the following licenses:
+
+- Biopython (Biopython License)
+- ESM-2 (MIT)
+- PyTorch (BSD-3-Clause)
+- scikit-learn (BSD-3-Clause)
+- tqdm (MPL-2.0)
+
+Full license texts for these dependencies are provided in `third-party/licenses`. No GPL-licensed code from FPbase is included in this repository.
