@@ -1,14 +1,15 @@
-
-# ESMS‑VAE
+# ESM-VAE
 
 <p align="center">
   <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics(TMD)-green.svg?style=flat-square" alt="paper"></a>
-  <a href="https://github.com/Ahnd6474/ESMS-VAE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/ESMS-VAE?style=flat-square" alt="license"></a>
+  <a href="https://github.com/Ahnd6474/ESM-VAE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/ESM-VAE?style=flat-square" alt="license"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
 
-> **ESMS‑VAE** (*Evolutionary Scale Modeling Student VAE*) is a 5.5 M‑parameter transformer VAE that learns structure‑aware latent representations of proteins through a novel **structural loss**.  It reaches **97.17 %** reconstruction accuracy on UniRef50 sequences and surpasses prior VAEs on the ProteinGym benchmark (*ρ = 0.689*).  Downstream tasks such as fluorescent‑protein classification (F1 = 0.99) and wavelength regression (RMSE ≈ 3 nm) confirm its practical utility.
+> **ESM-VAE** (*Evolutionary Scale Modelling VAE*) is a 5.5 M-parameter transformer VAE that learns **structure-aware** latent representations of proteins by aligning reconstructions to **pretrained ESM-2 embeddings** (perceptual loss). It achieves **97.17 %** reconstruction on UniRef50 and strong mutation-effect prediction on ProteinGym (*ρ = 0.689 overall; ρ = 0.7779 for ≤ 512 aa*). Downstream fluorescent-protein tasks reach **0.987** 5-fold accuracy and **2.7/3.8 nm** RMSE for absorption/emission.
+
+> **Note on math rendering:** GitHub Markdown renders LaTeX when you use `$$ ... $$` for display equations and `$ ... $` for inline. Avoid `\[` `\]` wrappers in README.
 
 ---
 
@@ -16,74 +17,81 @@
 
 1. [Features](#features)
 2. [Method](#method)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Repository Structure](#repository-structure)
-6. [Using the Notebooks](#using-the-notebooks)
-7. [Pre‑trained Models](#pre-trained-models)
+3. [ESM‑VAE structure diagram](#ESM‑VAE-structure-diagram)
+4. [Installation](#installation)
+5. [Quick Start](#quick-start)
+6. [Repository Structure](#repository-structure)
+7. [Pre-trained Models](#pre-trained-models)
 8. [Reproducing Paper Results](#reproducing-paper-results)
 9. [Benchmarks](#benchmarks)
 10. [Citation](#citation)
-11. [Availability and implementation](#Availability-and-implementation)
+11. [Availability and implementation](#availability-and-implementation)
 12. [License](#license)
-13. [Contact](#Contact)
----
-
-### Features
-
-- **ESMS student encoder** – a 6‑layer, 256‑dim model **distilled from ESM‑2** (650 M params) while preserving ≥ 99 % cosine‑similarity
-- **Structure‑aware learning** – latent vectors are explicitly aligned to ESMS embeddings via **cosine + MSE loss**, enabling geometry‑savvy generation without 3‑D supervision.
-- **Lightweight** – 5.5 M parameters; end‑to‑end training on a double T4 in ≤ 6 h.
-- **High fidelity** – 97 % sequence‑level reconstruction on UniRef50 test split.
-- **Robust latent space** – maintains active KL (~0.05) and avoids posterior collapse.
-- **Broad generalisation** – tops Kermut on all 162/217 ProteinGym DMS sets (ρ = 0.78/0.69).
-- **Plug‑and‑play embeddings** – drop‑in replacement for UniRep/ESM features in downstream GP/NN models.
+13. [Contact](#contact)
 
 ---
 
-### Method
+## Features
 
-The training objective combines structure alignment, reconstruction, classification, and KL regularisation:
-
-```math
-L = \lambda\,(L_{\text{MSE}} + L_{\text{COS}})\; +\; \alpha\,L_{\text{CE}}\; +\; \beta\,L_{\text{KL}}
-```
-
-where
-
-* **L<sub>COS</sub>** = 1 − cos(ESMS(**origin**), ESMS(**recon**))
-* **L<sub>MSE</sub>** = ∥ESMS(**origin**) − ESMS(**recon**)∥²
-
-See *docs/ESMS_VAE.pdf* (Eq. 3, L90‑L101) for details.
+- **Structure-aware training** — token-wise cosine/MSE alignment to **pretrained ESM-2 embeddings**, improving structural fidelity with minimal overhead.
+- **Lightweight** — 5.5 M parameters; transformer encoder–decoder (4 layers each, d=256, 4 heads).
+- **Active latent space** — maintains mean KL ≈ 0.05 to avoid posterior collapse.
+- **Strong generalization** — 97.17 % reconstruction on UniRef50; ProteinGym Spearman’s ρ = 0.689 (all 217), 0.7779 (≤ 512 aa).
+- **Downstream utility** — FP vs non-FP classification 0.987 (5-fold), wavelength regression RMSE 2.7/3.8 nm.
 
 ---
 
-### Installation
+## Method
+
+Two-phase objective (GitHub-friendly math):
+
+**Phase‑1 (teacher‑forced)**
+
+$$
+L_{\text{phase1}} \;=\; \lambda\,(L_{\text{COS}} + L_{\text{MSE}}) \;+\; \alpha\,L_{\text{CE}} \;+\; \beta\,L_{\text{KL}}\,,
+$$
+
+with perceptual terms computed on **pretrained ESM‑2 embeddings**.
+
+**Phase‑2 (free‑running, GPT‑style)**
+
+$$
+L_{\text{phase2}} \;=\; L_{\text{CE}}(\tilde{x}) \;+\; \beta\,L_{\text{KL}} \;+\; \lambda\,L_{\text{COS}}\!\big(\mathrm{ESM2}(x_{\text{orig}}),\,\mathrm{ESM2}(\tilde{x})\big)\,,
+$$
+
+dropping MSE and warming up $\\lambda$ to stabilize stochastic rollouts (K ≈ 64–256).
+
+---
+
+## ESM‑VAE structure diagram
+![ESM‑VAE overview](https://github.com/Ahnd6474/ESM-VAE/blob/main/img/struct.png)
+
+---
+
+## Installation
 
 ```bash
-# 1. Clone
-git clone https://github.com/Ahnd6474/ESMS-VAE.git
-cd ESMS-VAE
+# 1) Clone
+git clone https://github.com/Ahnd6474/ESM-VAE.git
+cd ESM-VAE
 
-# 2. Create env (optional)
-conda create -n esms-vae python=3.9 -y
-conda activate esms-vae
+# 2) (Optional) Conda env
+conda create -n esm-vae python=3.9 -y
+conda activate esm-vae
 
-# 3. Install Python requirements
+# 3) Python deps
 pip install -r requirements.txt
 ```
 
-> **GPU:** A single NVIDIA T4/RX‑A5000 (~16 GB) is sufficient for both training and inference.
-
 ---
 
-### Quick Start
+## Quick Start
 
 ```python
 from vae_module import Tokenizer, Config, load_vae, encode, decode
 
 cfg = Config(model_path="models/vae_epoch380.pt")
-tok = Tokenizer.from_esm()
+tok = Tokenizer.from_esm2()
 
 model = load_vae(cfg,
                  vocab_size=len(tok.vocab),
@@ -98,119 +106,86 @@ print(new_seq)
 
 ---
 
-### Repository Structure
+## Repository Structure
 
-- `notebooks/esms-vae-structured.ipynb` – step‑by‑step training and evaluation workflow.
-- `notebooks/gfp-cluster.ipynb` – explores latent space with **KMeans** clustering.
-- `notebooks/gfp-regressor.ipynb` – fits a regression model to latent features.
-- `models/vae_epoch380.pt` – pretrained checkpoint produced by the training notebook.
-- `docs/ESMS_VAE.pdf` – short paper summarising the method (also referenced below).
-
----
-
-### Using the Notebooks
-
-After training, you can explore the latent space further:
-
-1. **gfp-cluster.ipynb** – cluster sequences using KMeans on latent vectors.
-2. **gfp-regressor.ipynb** – fit a simple regressor (e.g., Ridge/XGBoost) on latent features to predict fluorescence properties.
-
-Both notebooks assume latent vectors have been generated by **esms‑vae‑structured.ipynb**.
+- `notebooks/esm-vae-training.ipynb` — end-to-end training/evaluation.
+- `notebooks/fp-cluster.ipynb` — K-means clustering + consensus decoding.
+- `notebooks/fp-regressor.ipynb` — GP/MLP regressors on latent features.
+- `models/vae_epoch380.pt` — main checkpoint used in the paper.
+- `docs/ESM_VAE.pdf` — short paper summary.
 
 ---
 
-### Pre‑trained Models
+## Pre-trained Models
 
-| File              | Epoch | KL    | Rec. Acc.   | Notes                                  |
+| File              | Epoch | KL    | Rec. Acc.   | Notes                                  |
 | ----------------- | ----- | ----- | ----------- | -------------------------------------- |
-| `vae_epoch380.pt` | 380   | 0.048 | **97.17 %** | Paper model (used in all experiments)  |
-| `vae_epoch500.pt` | 500   | 0.002 | 99.98 %     | High accuracy but suffers KL vanishing |
+| `vae_epoch380.pt` | 380   | 0.048 | **97.17 %** | Paper model (used in all experiments)  |
+| `vae_epoch500.pt` | 500   | 0.002 | 99.98 %     | Very low KL (risk of collapse)         |
 
-These model files are tracked with **Git Large File Storage (LFS)**.
-After cloning the repository, run:
-
-```bash
-git lfs pull
-```
-
-to download the checkpoints into `models/`.
+> Checkpoints are tracked with **Git LFS**: run `git lfs pull` after cloning.
 
 ---
 
-### Reproducing Paper Results
+## Reproducing Paper Results
 
 ```bash
-# Training on UniRef50 subset
+# Training on a UniRef50 subset
 python train_baseline.py --data data/uniref50_subsample.fasta \
                          --epochs 380 \
                          --save models/vae_epoch380.pt
 
-# ProteinGym inference (takes ≈3 h)
+# ProteinGym evaluation (all sets)
 python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 ```
 
-The scripts will output a CSV matching Table S2 of the paper.
+> Paper training used **a single H200 (NVL) GPU for ~1 day**. Slower GPUs work with longer runtimes.
 
 ---
 
-### Benchmarks
+## Benchmarks
 
-| Task              | Dataset          | Metric     | ESMS‑VAE   | Previous SOTA    |
-| ----------------- | ---------------- | ---------- | ---------- | ---------------- |
-| Reconstruction    | UniRef50 test    | % accurate | **97.17**  |N/A|
-| Mutational effect | ProteinGym (162/217) | Spearman ρ | **0.7779/0.689** |0.698/0.657|
-| FP vs non‑FP      | FPbase           | 5‑fold Acc | **0.987**  |N/A|
-| λabs              | FPbase           | RMSE (nm)  | **2.70**   |N/A|
-| λem               | FPbase           | RMSE (nm)  | **3.80**   |N/A|
+| Task              | Dataset                 | Metric        | ESM-VAE       | Notes                                |
+| ----------------- | ----------------------- | ------------- | ------------- | ------------------------------------ |
+| Reconstruction    | UniRef50 (held-out)     | % accurate    | **97.17**     |                                      |
+| Mutational effect | ProteinGym (≤ 512 / all)| Spearman ρ    | **0.7779 / 0.689** | Our evaluation protocol               |
+| FP vs non-FP      | FPbase                  | 5-fold Acc    | **0.987**     | GP classifier                         |
+| λ_abs             | FPbase                  | RMSE (nm)     | **2.70**      | GP regressor                          |
+| λ_em              | FPbase                  | RMSE (nm)     | **3.80**      | GP regressor                          |
 
 ---
-### Limitations
-Maximum sequence length 512. The model and tokeniser were configured with max_len = 512 to fit on a double-GPU setup. For proteins longer than 512 residues we split each sequence into non‑overlapping 512‑aa chunks before encoding/decoding. This chunking hurts mutational‑effect performance: on the 55 ProteinGym datasets containing sequences > 512 aa the Spearman correlation drops to 0.427, whereas on the other 162 datasets (≤ 512 aa) the model reaches 0.7779.
-### Citation
+
+## Citation
 
 If you use this code, please cite:
 
 ```bibtex
-@article{ahn2025esmsvae,
-  title={ESMS VAE: A Structure-Informed Variational Autoencoder for Protein Engineering},
+@article{ahn2025esmvae,
+  title={ESM VAE: A Structure-Informed Variational Autoencoder for Sequence Embedding and De Novo Protein Generation},
   author={Ahn, Danny and Lee, Minjae and Moon, Shihyun and Jung, Jooyoung},
   journal={Bioinformatics},
   year={2025},
   doi={10.1093/bioinformatics/btzXXX}
 }
 ```
-### Availability and implementation
-
-ESMS‑VAE (source code and pre‑trained models) is **freely available for non‑commercial research and educational use** at this GitHub repository under the *ESMS‑VAE Non‑Commercial Research License v1.1*.  
-**Commercial use requires prior written permission from the investor “안성톱밥”.**
-
-A snapshot of the exact version used in the manuscript, together with model checkpoints and test data, will be archived on Zenodo at the time of submission and referenced by a DOI.
 
 ---
 
-### License
+## Availability and implementation
 
-The code and pre‑trained models are licensed for **non‑commercial research use only**.  
-See the accompanying [LICENSE](LICENSE) file for the full terms.
+Code, pretrained weights, and datasets: **https://github.com/Ahnd6474/ESM-VAE**.
+
+---
 
 ## License
+The ESM‑VAE code and models are released under the [Business Source License 1.1](LICENSE).
 
-This project is licensed under the **[Your Project Name] Non-Commercial License**.  
-See `LICENSE` for details.
+Third‑party components are distributed under their respective licenses (Biopython License, MIT, BSD-3-Clause, MPL-2.0); the full texts are provided in `third-party/licenses`.
 
-### Third‑Party Components
+No GPL‑licensed code from FPbase is included in this repository.
 
-| Component     | License                      | License Text                          |
-|--------------|-----------------------------|---------------------------------------|
-| scikit‑learn | BSD 3‑Clause                | [third_party/licenses/scikit‑learn-BSD-3-Clause.txt] |
-| PyTorch      | BSD 3‑Clause (Modified BSD) | [third_party/licenses/pytorch-BSD-3-Clause.txt]      |
-| fpbase       | GPL 3.0                     | [third_party/licenses/fpbase-GPL-3.0.txt]            |
-| esm‑2        | MIT                         | [third_party/licenses/esm-2-MIT.txt]                |
-| biopython    | Biopython License           | [third_party/licenses/Biopython_LICENSE.rst]         |
-| tqdm         | MPL 2.0                     | [third_party/licenses/tqdm-MPL-2.0.txt]             |
-| UniRef50     | CC BY 4.0                   | https://creativecommons.org/licenses/by/4.0/        |
-
-
-### Contact
-<p>Contact: <a href="mailto:ahnd6474@gmail.com">ahnd6474@gmail.com</a></p>
 ---
+
+## Contact
+
+Contact: <ahnd6474@gmail.com>
