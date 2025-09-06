@@ -65,7 +65,7 @@ warming up \( \lambda \) to stabilize latent-conditioned rollouts (K≈64–256)
 
 ## Architecture Diagram
 
-![Latent GPT overview](https://github.com/Ahnd6474/Latent-GPT/blob/main/img/struct.png)
+![Latent GPT overview](https://github.com/Ahnd6474/Latent-GPT/blob/main/img/ML_architecture-1.png)
 
 ---
 
