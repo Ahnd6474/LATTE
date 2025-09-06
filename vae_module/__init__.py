@@ -4,6 +4,7 @@ from .config import Config, load_config
 from .loader import load_vae
 from .encoder import encode, encode_batch, encode_long, encode_long_batch
 from .decoder import decode, decode_batch
+from .model import VAEWithSurrogate, Z2MemorySurrogate
 from .classes import SequenceDataset, Tokenizer
 from .utils import sequence_to_tensor, tensor_to_sequence, pad_collate
 from .logger import setup_logger
@@ -24,6 +25,8 @@ __all__ = [
     "encode_long_batch",
     "decode",
     "decode_batch",
+    "VAEWithSurrogate",
+    "Z2MemorySurrogate",
     "SequenceDataset",
     "Tokenizer",
     "sequence_to_tensor",

@@ -4,7 +4,7 @@ import torch
 from tqdm import trange
 
 from .logger import setup_logger
-from .model import VAETransformerDecoder
+from .model import VAEWithSurrogate
 from .classes import Tokenizer
 from .utils import tensor_to_sequence
 
@@ -12,7 +12,7 @@ logger = setup_logger(__name__)
 
 
 def decode(
-    model: VAETransformerDecoder,
+    model: VAEWithSurrogate,
     z: torch.Tensor,
     tokenizer: Tokenizer,
     max_len: int,
@@ -45,7 +45,14 @@ def decode(
     tgt_mask = torch.triu(
         torch.full((max_len, max_len), float("-inf"), device=device), diagonal=1
     )
-    memory = torch.zeros(1, max_len, model.dec_emb.embedding_dim, device=device)
+
+    # Prepare decoder memory using the surrogate if available
+    if getattr(model, "surrogate", None) is not None:
+        mask_bool = torch.ones(1, max_len, dtype=torch.bool, device=device)
+        memory, mem_mask = model.surrogate(z, mask_bool, causal_self=False)
+    else:
+        memory = torch.zeros(1, max_len, model.dec_emb.embedding_dim, device=device)
+        mem_mask = torch.ones(1, max_len, dtype=torch.bool, device=device)
 
     with torch.no_grad():
         for t in trange(1, max_len, disable=True):
@@ -58,6 +65,7 @@ def decode(
                 tgt=tgt,
                 memory=memory,
                 tgt_mask=tgt_mask[:t, :t],
+                memory_key_padding_mask=~mem_mask,
             )
 
             logits = model.out(dec_out)
@@ -74,7 +82,7 @@ def decode(
 
 
 def decode_batch(
-    model: VAETransformerDecoder,
+    model: VAEWithSurrogate,
     Z: torch.Tensor,
     tokenizer: Tokenizer,
     max_len: int,
