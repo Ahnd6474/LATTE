@@ -7,12 +7,12 @@ from .exceptions import InvalidSequenceError, SequenceLengthError
 from .logger import setup_logger
 from .utils import sequence_to_tensor
 from .classes import Tokenizer
-from .model import VAETransformerDecoder
+from .model import VAEWithSurrogate
 
 logger = setup_logger(__name__)
 
 
-def encode(model: VAETransformerDecoder, seq: str, tokenizer: Tokenizer, max_len: int) -> torch.Tensor:
+def encode(model: VAEWithSurrogate, seq: str, tokenizer: Tokenizer, max_len: int) -> torch.Tensor:
     """Encode a single sequence into a latent vector."""
     model.eval()
     with torch.no_grad():
@@ -24,7 +24,7 @@ def encode(model: VAETransformerDecoder, seq: str, tokenizer: Tokenizer, max_len
         return z.squeeze(0)
 
 
-def encode_batch(model: VAETransformerDecoder, loader: DataLoader, tokenizer: Tokenizer) -> torch.Tensor:
+def encode_batch(model: VAEWithSurrogate, loader: DataLoader, tokenizer: Tokenizer) -> torch.Tensor:
     """Encode a batch of sequences from a dataloader."""
     model.eval()
     zs = []
@@ -42,7 +42,7 @@ def encode_batch(model: VAETransformerDecoder, loader: DataLoader, tokenizer: To
 
 
 def encode_long(
-    model: VAETransformerDecoder,
+    model: VAEWithSurrogate,
     seq: str,
     tokenizer: Tokenizer,
     max_len: int,
@@ -87,7 +87,7 @@ def encode_long(
 
 
 def encode_long_batch(
-    model: VAETransformerDecoder,
+    model: VAEWithSurrogate,
     sequences: List[str],
     tokenizer: Tokenizer,
     max_len: int,

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 import torch
 import torch.nn as nn
@@ -90,3 +90,78 @@ class VAETransformerDecoder(nn.Module):
         )
         logits = self.out(h_dec)
         return logits, mu, logvar, h_enc, enc_mask
+
+
+class Z2MemorySurrogate(nn.Module):
+    """Small transformer that predicts decoder memory from latent ``z``."""
+
+    def __init__(
+        self,
+        d_model: int,
+        latent_dim: int,
+        max_len: int,
+        layers: int = 2,
+        heads: int = 4,
+        ffn_dim: Optional[int] = None,
+        dropout: float = DROPOUT,
+    ) -> None:
+        super().__init__()
+        if ffn_dim is None:
+            ffn_dim = 3 * d_model
+        self.pos = nn.Parameter(torch.zeros(1, max_len, d_model))
+        self.token = nn.Parameter(torch.zeros(1, 1, d_model))
+        self.z_proj = nn.Linear(latent_dim, d_model)
+        self.z_ln = nn.LayerNorm(d_model)
+        enc_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=heads,
+            dim_feedforward=ffn_dim,
+            batch_first=True,
+            activation="gelu",
+            dropout=dropout,
+        )
+        self.enc = nn.TransformerEncoder(enc_layer, num_layers=layers)
+        self.out_ln = nn.LayerNorm(d_model)
+
+    def forward(
+        self, z: torch.Tensor, mask_bool: torch.Tensor, causal_self: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        B, L = mask_bool.shape
+        base = self.token.expand(B, L, -1) + self.pos[:, :L, :]
+        zemb = self.z_ln(self.z_proj(z)).unsqueeze(1).expand(-1, L, -1)
+        h = base + zemb
+        src_mask = None
+        if causal_self:
+            src_mask = torch.triu(
+                torch.full((L, L), float("-inf"), device=h.device), diagonal=1
+            )
+        h = self.enc(h, mask=src_mask, src_key_padding_mask=~mask_bool)
+        return self.out_ln(h), mask_bool
+
+
+class VAEWithSurrogate(nn.Module):
+    """Wrapper bundling a VAE and a surrogate network."""
+
+    def __init__(
+        self,
+        vae: VAETransformerDecoder,
+        surrogate: Optional[Z2MemorySurrogate] = None,
+    ) -> None:
+        super().__init__()
+        self.vae = vae
+        self.surrogate = surrogate
+
+        for name in [
+            "encoder",
+            "decoder",
+            "dec_emb",
+            "dec_pos",
+            "latent2emb",
+            "pad_token",
+            "bos_token",
+            "out",
+        ]:
+            setattr(self, name, getattr(vae, name))
+
+    def forward(self, x: torch.Tensor, mask: torch.Tensor):
+        return self.vae(x, mask)
