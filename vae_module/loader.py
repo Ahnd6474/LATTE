@@ -60,13 +60,38 @@ def load_vae(
         ).to(device)
         model = VAEWithSurrogate(vae, sur).to(device)
         if "vae" in checkpoint:
-            model.vae.load_state_dict(checkpoint["vae"])
+            load_res = model.vae.load_state_dict(checkpoint["vae"], strict=False)
+            if load_res.missing_keys:
+                logger.warning("Missing keys in VAE state dict: %s", load_res.missing_keys)
+            if load_res.unexpected_keys:
+                logger.warning(
+                    "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
+                )
         if "surrogate" in checkpoint:
-            model.surrogate.load_state_dict(checkpoint["surrogate"])
+            sur_res = model.surrogate.load_state_dict(
+                checkpoint["surrogate"], strict=False
+            )
+            if sur_res.missing_keys:
+                logger.warning(
+                    "Missing keys in surrogate state dict: %s", sur_res.missing_keys
+                )
+            if sur_res.unexpected_keys:
+                logger.warning(
+                    "Unexpected keys in surrogate state dict: %s",
+                    sur_res.unexpected_keys,
+                )
         logger.info("Loaded VAE with surrogate from %s on %s", cfg.model_path, device)
     else:
         model = VAEWithSurrogate(vae, None).to(device)
-        model.vae.load_state_dict(checkpoint.get("model_sd", checkpoint))
+        load_res = model.vae.load_state_dict(
+            checkpoint.get("model_sd", checkpoint), strict=False
+        )
+        if load_res.missing_keys:
+            logger.warning("Missing keys in VAE state dict: %s", load_res.missing_keys)
+        if load_res.unexpected_keys:
+            logger.warning(
+                "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
+            )
         logger.info("Loaded VAE from %s on %s", cfg.model_path, device)
 
     model.eval()
