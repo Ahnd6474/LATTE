@@ -167,7 +167,7 @@ python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 | Task               | Dataset                   | Metric       | Latent GPT     | Notes                                  |
 |--------------------|---------------------------|--------------|----------------|----------------------------------------|
 | Reconstruction     | UniRef50 (held-out)       | % accurate   | **97.17**      |                                        |
-| Mutational effect  | ProteinGym (≤512 / all)   | Spearman ρ   | **0.7779 / 0.689** | 3-layer MLP on latents                 |
+| Mutational effect  | ProteinGym (≤512 / all)   | Spearman ρ   | **0.7779 / 0.689** | 3-layer MLP on latents(on full dataset of all mutations)         |
 | FP vs non-FP       | FPbase                     | 5-fold Acc   | **0.987**      | GP classifier                          |
 | λ_abs              | FPbase                     | RMSE (nm)    | **2.70**       | GP regressor                           |
 | λ_em               | FPbase                     | RMSE (nm)    | **3.80**       | GP regressor                           |
