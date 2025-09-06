@@ -92,7 +92,7 @@ pip install -r requirements.txt
 from vae_module import Tokenizer, Config, load_vae, encode, decode
 
 cfg = Config(model_path="models/vae_epoch380.pt")
-tok = Tokenizer.from_esm2()
+tok = Tokenizer.from_esm()
 
 model = load_vae(cfg,
                  vocab_size=len(tok.vocab),
