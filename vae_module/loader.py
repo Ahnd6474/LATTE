@@ -67,12 +67,14 @@ def load_vae(
                 )
             else:
                 logger.info("No missing keys in VAE state dict")
+
             if load_res.unexpected_keys:
                 logger.warning(
                     "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
                 )
             else:
                 logger.info("No unexpected keys in VAE state dict")
+
         if "surrogate" in checkpoint:
             sur_res = model.surrogate.load_state_dict(
                 checkpoint["surrogate"], strict=False
@@ -83,6 +85,7 @@ def load_vae(
                 )
             else:
                 logger.info("No missing keys in surrogate state dict")
+
             if sur_res.unexpected_keys:
                 logger.warning(
                     "Unexpected keys in surrogate state dict: %s",
@@ -100,12 +103,14 @@ def load_vae(
             logger.warning("Missing keys in VAE state dict: %s", load_res.missing_keys)
         else:
             logger.info("No missing keys in VAE state dict")
+
         if load_res.unexpected_keys:
             logger.warning(
                 "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
             )
         else:
             logger.info("No unexpected keys in VAE state dict")
+
         logger.info("Loaded VAE from %s on %s", cfg.model_path, device)
 
     model.eval()
