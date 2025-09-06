@@ -1,15 +1,15 @@
-# ESM-VAE
+# Latent GPT
 
 <p align="center">
   <a href="https://doi.org/10.1093/bioinformatics/btzXXX"><img src="https://img.shields.io/badge/Paper-Bioinformatics(TMD)-green.svg?style=flat-square" alt="paper"></a>
-  <a href="https://github.com/Ahnd6474/ESM-VAE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/ESM-VAE?style=flat-square" alt="license"></a>
+  <a href="https://github.com/Ahnd6474/Latent-GPT/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/Latent-GPT?style=flat-square" alt="license"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
 
-> **ESM-VAE** (*Evolutionary Scale Modelling VAE*) is a 5.5 M-parameter transformer VAE that learns **structure-aware** latent representations of proteins by aligning reconstructions to **pretrained ESM-2 embeddings** (perceptual loss). It achieves **97.17 %** reconstruction on UniRef50 and strong mutation-effect prediction on ProteinGym (*ρ = 0.689 overall; ρ = 0.7779 for ≤ 512 aa*). Downstream fluorescent-protein tasks reach **0.987** 5-fold accuracy and **2.7/3.8 nm** RMSE for absorption/emission.
+> **Latent GPT** (Latent Generative Pretrained Transformer) is a **structure-aware protein VAE** that aligns reconstructions to **pretrained ESM2/ESMS embeddings** via a perceptual loss (COS + MSE), keeping the latent space active (KL ≈ 0.05) and informative. It reaches **97.17%** reconstruction on UniRef50 and **ProteinGym Spearman’s ρ = 0.7779 (≤512 aa) / 0.689 (all 217)**. Downstream FP tasks: **0.987** (5-fold accuracy) and **2.7/3.8 nm** RMSE for absorption/emission.
 
-> **Note on math rendering:** GitHub Markdown renders LaTeX when you use `$$ ... $$` for display equations and `$ ... $` for inline. Avoid `\[` `\]` wrappers in README.
+> **Note on math rendering:** Use `$$ ... $$` for display and `$ ... $` for inline LaTeX on GitHub.
 
 ---
 
@@ -17,7 +17,7 @@
 
 1. [Features](#features)
 2. [Method](#method)
-3. [ESM‑VAE structure diagram](#ESM‑VAE-structure-diagram)
+3. [Architecture Diagram](#architecture-diagram)
 4. [Installation](#installation)
 5. [Quick Start](#quick-start)
 6. [Repository Structure](#repository-structure)
@@ -25,7 +25,7 @@
 8. [Reproducing Paper Results](#reproducing-paper-results)
 9. [Benchmarks](#benchmarks)
 10. [Citation](#citation)
-11. [Availability and implementation](#availability-and-implementation)
+11. [Availability and Implementation](#availability-and-implementation)
 12. [License](#license)
 13. [Contact](#contact)
 
@@ -33,38 +33,39 @@
 
 ## Features
 
-- **Structure-aware training** — token-wise cosine/MSE alignment to **pretrained ESM-2 embeddings**, improving structural fidelity with minimal overhead.
-- **Lightweight** — 5.5 M parameters; transformer encoder–decoder (4 layers each, d=256, 4 heads).
-- **Active latent space** — maintains mean KL ≈ 0.05 to avoid posterior collapse.
-- **Strong generalization** — 97.17 % reconstruction on UniRef50; ProteinGym Spearman’s ρ = 0.689 (all 217), 0.7779 (≤ 512 aa).
-- **Downstream utility** — FP vs non-FP classification 0.987 (5-fold), wavelength regression RMSE 2.7/3.8 nm.
+- **Structure-aware training** — token-wise **cosine + MSE** alignment to **ESM2/ESMS** embeddings (perceptual loss) to encode structural/functional cues and avoid KL collapse.
+- **Lightweight** — ~5.5M parameters; transformer encoder–decoder (4 layers each, d=256, 4 heads).
+- **Active latent space** — mean KL near **0.05**, reducing posterior collapse risk.
+- **Generalization** — **97.17%** reconstruction on UniRef50; **ProteinGym ρ = 0.7779 (≤512 aa) / 0.689 (all 217)** with a simple 3-layer MLP on latents.
+- **Downstream utility** — FP vs non-FP **0.987** (5-fold), wavelength RMSE **2.7/3.8 nm**.
 
 ---
 
 ## Method
 
-Two-phase objective (GitHub-friendly math):
+Two-phase objective with perceptual supervision:
 
-**Phase‑1 (teacher‑forced)**
-
-$$
-L_{\text{phase1}} \;=\; \lambda\,(L_{\text{COS}} + L_{\text{MSE}}) \;+\; \alpha\,L_{\text{CE}} \;+\; \beta\,L_{\text{KL}}\,,
-$$
-
-with perceptual terms computed on **pretrained ESM‑2 embeddings**.
-
-**Phase‑2 (free‑running, GPT‑style)**
+**Phase-1 (teacher-forced)**
 
 $$
-L_{\text{phase2}} \;=\; L_{\text{CE}}(\tilde{x}) \;+\; \beta\,L_{\text{KL}} \;+\; \lambda\,L_{\text{COS}}\!\big(\mathrm{ESM2}(x_{\text{orig}}),\,\mathrm{ESM2}(\tilde{x})\big)\,,
+L_1 \;=\; \lambda\,(L_{\text{COS}} + L_{\text{MSE}}) \;+\; \alpha\,L_{\text{CE}} \;+\; \beta\,L_{\text{KL}} \,,
 $$
 
-dropping MSE and warming up $\\lambda$ to stabilize stochastic rollouts (K ≈ 64–256).
+computed on pretrained **ESM2/ESMS** embeddings to enforce structural consistency.
+
+**Phase-2 (free-running, GPT-style)**
+
+$$
+L_2 \;=\; L_{\text{CE}}(\tilde{x}) \;+\; \beta\,L_{\text{KL}} \;+\; \lambda\,L_{\text{COS}}\!\big(\mathrm{ESM}(x_{\text{orig}}),\,\mathrm{ESM}(\tilde{x})\big) \,, 
+$$
+
+warming up \( \lambda \) to stabilize latent-conditioned rollouts (K≈64–256).
 
 ---
 
-## ESM‑VAE structure diagram
-![ESM‑VAE overview](https://github.com/Ahnd6474/ESM-VAE/blob/main/img/struct.png)
+## Architecture Diagram
+
+![Latent GPT overview](https://github.com/Ahnd6474/Latent-GPT/blob/main/img/struct.png)
 
 ---
 
@@ -72,12 +73,12 @@ dropping MSE and warming up $\\lambda$ to stabilize stochastic rollouts (K ≈ 6
 
 ```bash
 # 1) Clone
-git clone https://github.com/Ahnd6474/ESM-VAE.git
-cd ESM-VAE
+git clone https://github.com/Ahnd6474/Latent-GPT.git
+cd Latent-GPT
 
 # 2) (Optional) Conda env
-conda create -n esm-vae python=3.9 -y
-conda activate esm-vae
+conda create -n latent-gpt python=3.9 -y
+conda activate latent-gpt
 
 # 3) Python deps
 pip install -r requirements.txt
@@ -104,54 +105,54 @@ new_seq = decode(model, z, tok)
 print(new_seq)
 ```
 
+> Check `notebooks/` for end-to-end training/evaluation examples.
+
 ---
 
 ## Repository Structure
 
-- `notebooks/esm-vae-training.ipynb` — end-to-end training/evaluation.
+- `notebooks/latent-gpt-training.ipynb` — end-to-end training/evaluation.
 - `notebooks/fp-cluster.ipynb` — K-means clustering + consensus decoding.
 - `notebooks/fp-regressor.ipynb` — GP/MLP regressors on latent features.
 - `models/vae_epoch380.pt` — main checkpoint used in the paper.
-- `docs/ESM_VAE.pdf` — short paper summary.
+- `docs/Latent_GPT.pdf` — paper/preprint (short form).
 
 ---
 
 ## Pre-trained Models
 
-| File              | Epoch | KL    | Rec. Acc.   | Notes                                  |
-| ----------------- | ----- | ----- | ----------- | -------------------------------------- |
-| `vae_epoch380.pt` | 380   | 0.048 | **97.17 %** | Paper model (used in all experiments)  |
-| `vae_epoch500.pt` | 500   | 0.002 | 99.98 %     | Very low KL (risk of collapse)         |
+| File              | Epoch | KL     | Rec. Acc.  | Notes                                  |
+|-------------------|:-----:|:------:|:----------:|----------------------------------------|
+| `vae_epoch380.pt` |  380  | 0.048  | **97.17%** | Paper model (used in all experiments)  |
+| `vae_epoch500.pt` |  500  | 0.002  | 99.98%     | Very low KL (risk of collapse)         |
 
-> Checkpoints are tracked with **Git LFS**: run `git lfs pull` after cloning.
+> We use **Git LFS** for checkpoints. Run `git lfs pull` after cloning.
 
 ---
 
 ## Reproducing Paper Results
 
 ```bash
-# Training on a UniRef50 subset
-python train_baseline.py --data data/uniref50_subsample.fasta \
-                         --epochs 380 \
-                         --save models/vae_epoch380.pt
+# Training on a UniRef50 subsample
+python train_baseline.py --data data/uniref50_subsample.fasta                          --epochs 380                          --save models/vae_epoch380.pt
 
 # ProteinGym evaluation (all sets)
 python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 ```
 
-> Paper training used **a single H200 (NVL) GPU for ~1 day**. Slower GPUs work with longer runtimes.
+> Reference training was run on **Kaggle T4 sessions** (see paper). Other GPUs will work with longer runtimes.
 
 ---
 
 ## Benchmarks
 
-| Task              | Dataset                 | Metric        | ESM-VAE       | Notes                                |
-| ----------------- | ----------------------- | ------------- | ------------- | ------------------------------------ |
-| Reconstruction    | UniRef50 (held-out)     | % accurate    | **97.17**     |                                      |
-| Mutational effect | ProteinGym (≤ 512 / all)| Spearman ρ    | **0.7779 / 0.689** | Our evaluation protocol               |
-| FP vs non-FP      | FPbase                  | 5-fold Acc    | **0.987**     | GP classifier                         |
-| λ_abs             | FPbase                  | RMSE (nm)     | **2.70**      | GP regressor                          |
-| λ_em              | FPbase                  | RMSE (nm)     | **3.80**      | GP regressor                          |
+| Task               | Dataset                   | Metric       | Latent GPT     | Notes                                  |
+|--------------------|---------------------------|--------------|----------------|----------------------------------------|
+| Reconstruction     | UniRef50 (held-out)       | % accurate   | **97.17**      |                                        |
+| Mutational effect  | ProteinGym (≤512 / all)   | Spearman ρ   | **0.7779 / 0.689** | 3-layer MLP on latents                 |
+| FP vs non-FP       | FPbase                     | 5-fold Acc   | **0.987**      | GP classifier                          |
+| λ_abs              | FPbase                     | RMSE (nm)    | **2.70**       | GP regressor                           |
+| λ_em               | FPbase                     | RMSE (nm)    | **3.80**       | GP regressor                           |
 
 ---
 
@@ -160,9 +161,9 @@ python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 If you use this code, please cite:
 
 ```bibtex
-@article{ahn2025esmvae,
-  title={ESM VAE: A Structure-Informed Variational Autoencoder for Sequence Embedding and De Novo Protein Generation},
-  author={Ahn, Danny and Lee, Minjae and Moon, Shihyun and Jung, Jooyoung},
+@article{ahn2025latentgpt,
+  title={Latent GPT: A Structure-Informed Variational Autoencoder for Sequence Embedding and De Novo Protein Generation},
+  author={Ahn, Danny and Lee, Minjae and Moon, Sihyeon and Jung, Jooyoung},
   journal={Bioinformatics},
   year={2025},
   doi={10.1093/bioinformatics/btzXXX}
@@ -171,18 +172,16 @@ If you use this code, please cite:
 
 ---
 
-## Availability and implementation
+## Availability and Implementation
 
-Code, pretrained weights, and datasets: **https://github.com/Ahnd6474/ESM-VAE**.
+Code, pretrained weights, and datasets: **https://github.com/Ahnd6474/Latent-GPT**.
 
 ---
 
 ## License
-The ESM‑VAE code and models are released under the [Business Source License 1.1](LICENSE).
 
-Third‑party components are distributed under their respective licenses (Biopython License, MIT, BSD-3-Clause, MPL-2.0); the full texts are provided in `third-party/licenses`.
-
-No GPL‑licensed code from FPbase is included in this repository.
+Code and models are released under the [Business Source License 1.1](LICENSE).  
+Third-party components retain their respective licenses (Biopython, MIT, BSD-3-Clause, MPL-2.0).
 
 ---
 
