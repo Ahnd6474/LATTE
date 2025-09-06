@@ -158,7 +158,7 @@ python train_baseline.py --data data/uniref50_subsample.fasta                   
 python protein_gym_evaluate.py --weights models/vae_epoch380.pt
 ```
 
-> Reference training was run on **Kaggle T4 sessions** (see paper). Other GPUs will work with longer runtimes.
+> Reference training was run on **Kaggle T4 sessions** (see paper).
 
 ---
 
