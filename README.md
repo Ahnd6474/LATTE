@@ -125,8 +125,26 @@ print(new_seq)
 |-------------------|:-----:|:------:|:----------:|----------------------------------------|
 | `vae_epoch380.pt` |  380  | 0.048  | **97.17%** | Paper model (used in all experiments)  |
 | `vae_epoch500.pt` |  500  | 0.002  | 99.98%     | Very low KL (risk of collapse)         |
+| `vae_sur.pt`      |  380  | 0.048  | **97.17%** | VAE with 2-layer surrogate memory net  |
 
 > We use **Git LFS** for checkpoints. Run `git lfs pull` after cloning.
+
+The `vae_sur.pt` bundle packages a small transformer surrogate (`Z2MemorySurrogate`) that predicts decoder memory directly from the latent vector. This enables faster, teacher-free generation while keeping reconstruction quality.
+
+### Usage
+
+```python
+from vae_module import Tokenizer, Config, load_vae, encode, decode
+
+cfg = Config(model_path="models/vae_sur.pt")
+tok = Tokenizer.from_esm()
+model = load_vae(cfg, len(tok.vocab), tok.pad_idx, tok.bos_idx)
+
+seq = "MKTFFVLLLACTIVCLLA"
+z = encode(model, seq, tok, cfg.max_len)
+new_seq = decode(model, z, tok)  # surrogate supplies decoder memory
+print(new_seq)
+```
 
 ---
 
