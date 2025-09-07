@@ -53,10 +53,10 @@ $$
 
 computed on pretrained **ESM2/ESMS** embeddings to enforce structural consistency.
 
-**Phase-2 (free-running, GPT-style)**
+**Phase-2 (Train surrogate)**
 
 $$
-L_2 \;=\; L_{\text{CE}}(\tilde{x}) \;+\; \beta\,L_{\text{KL}} \;+\; \lambda\,L_{\text{COS}}\!\big(\mathrm{ESM}(x_{\text{orig}}),\,\mathrm{ESM}(\tilde{x})\big) \,, 
+L_2 \;=\; L_{\text{CE}}(\tilde{x}) 
 $$
 
 warming up \( \lambda \) to stabilize latent-conditioned rollouts (K≈64–256).
