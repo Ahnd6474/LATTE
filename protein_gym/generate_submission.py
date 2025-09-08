@@ -76,7 +76,74 @@ def train_mlp(z: torch.Tensor, y: torch.Tensor, device: torch.device) -> MLPRegr
     return model, scaler
 
 
-def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.DataFrame:
+def make_folds(n: int, n_folds: int, strategy: str) -> List[List[int]]:
+    """Return indices for each fold according to the chosen strategy."""
+    if strategy not in {"random", "contiguous", "modulo"}:
+        raise ValueError(f"Unknown strategy: {strategy}")
+    indices = list(range(n))
+    if strategy == "random":
+        rng = torch.Generator().manual_seed(0)
+        perm = torch.randperm(n, generator=rng).tolist()
+        fold_sizes = [(n + i) // n_folds for i in range(n_folds)]
+        folds: List[List[int]] = []
+        current = 0
+        for fold_size in fold_sizes:
+            folds.append(perm[current : current + fold_size])
+            current += fold_size
+        return folds
+    if strategy == "contiguous":
+        fold_sizes = [(n + i) // n_folds for i in range(n_folds)]
+        folds = []
+        current = 0
+        for fold_size in fold_sizes:
+            folds.append(list(range(current, current + fold_size)))
+            current += fold_size
+        return folds
+    # modulo strategy
+    folds = [[] for _ in range(n_folds)]
+    for idx in indices:
+        folds[idx % n_folds].append(idx)
+    return folds
+
+
+def cross_validate(
+    z: torch.Tensor,
+    y: torch.Tensor,
+    device: torch.device,
+    strategy: str,
+    n_folds: int = 5,
+) -> List[float]:
+    """Perform k-fold cross-validation using the provided strategy."""
+    folds = make_folds(len(z), n_folds, strategy)
+    scores: List[float] = []
+    for i, val_idx in enumerate(folds):
+        train_idx = [idx for j, fold in enumerate(folds) if j != i for idx in fold]
+        model, scaler = train_mlp(z[train_idx], y[train_idx], device)
+        z_val = z[val_idx]
+        y_val = y[val_idx]
+        z_val_scaled = torch.tensor(
+            scaler.transform(z_val.cpu().numpy()), dtype=torch.float32
+        ).to(device)
+        with torch.no_grad():
+            preds = model(z_val_scaled).cpu().numpy()
+        rho = spearmanr(preds, y_val.numpy()).correlation
+        scores.append(rho)
+    return scores
+
+
+def cross_validation_report(
+    z: torch.Tensor, y: torch.Tensor, device: torch.device, n_folds: int = 5
+) -> None:
+    """Run CV with random, contiguous, and modulo splits and print scores."""
+    for strat in ["random", "contiguous", "modulo"]:
+        scores = cross_validate(z, y, device, strat, n_folds)
+        avg = sum(scores) / len(scores)
+        print(f"{strat.capitalize()} CV Spearman: {avg:.4f}")
+
+
+def process_file(
+    path: Path, cfg: Config, tokenizer: Tokenizer, model, run_cv: bool = False
+) -> pd.DataFrame:
     df = pd.read_csv(path)
     seqs = read_sequences(df)
     if "DMS_score" in df.columns:
@@ -92,6 +159,9 @@ def process_file(path: Path, cfg: Config, tokenizer: Tokenizer, model) -> pd.Dat
     )
     with torch.no_grad():
         z = encode_batch(model, loader, tokenizer)
+
+    if run_cv:
+        cross_validation_report(z, y, cfg.device)
 
     mlp, scaler = train_mlp(z, y, device=cfg.device)
     mlp.eval()
@@ -112,7 +182,14 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Generate ProteinGym submission")
     p.add_argument("--data-dir", required=True, help="Directory with ProteinGym CSV files")
     p.add_argument("--output-dir", required=True, help="Where to store prediction files")
-    p.add_argument("--weights", default="models/vae_epoch380.pt", help="Path to pretrained VAE weights")
+    p.add_argument(
+        "--weights", default="models/vae_epoch380.pt", help="Path to pretrained VAE weights"
+    )
+    p.add_argument(
+        "--cv",
+        action="store_true",
+        help="Run 5-fold CV with random, contiguous, and modulo splits",
+    )
     args = p.parse_args()
 
     cfg = Config(model_path=args.weights, device="cuda" if torch.cuda.is_available() else "cpu")
@@ -123,7 +200,7 @@ def main() -> None:
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     for csv_path in sorted(Path(args.data_dir).glob("*.csv")):
-        pred_df = process_file(csv_path, cfg, tokenizer, vae)
+        pred_df = process_file(csv_path, cfg, tokenizer, vae, run_cv=args.cv)
         out_file = Path(args.output_dir) / f"{csv_path.stem}_pred.csv"
         pred_df.to_csv(out_file, index=False)
 
