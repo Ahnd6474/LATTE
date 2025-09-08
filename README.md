@@ -101,7 +101,7 @@ model = load_vae(cfg,
 
 seq = "MKTFFVLLLACTIVCLLA"
 z   = encode(model, seq, tok, cfg.max_len)
-new_seq = decode(model, z, tok)
+new_seq = decode(model, z, tok, cfg.max_len)
 print(new_seq)
 ```
 
