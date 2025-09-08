@@ -17,6 +17,8 @@ def decode(
     tokenizer: Tokenizer,
     max_len: int,
     truncate_len: Optional[int] = None,
+    temperature: float = 1.0,
+    top_k: Optional[int] = None,
 ) -> str:
     """Decode a latent vector into a sequence.
 
@@ -32,6 +34,11 @@ def decode(
         Maximum length to generate.
     truncate_len:
         If provided, the decoded sequence will be truncated to this length.
+    temperature:
+        Sampling temperature. ``1.0`` uses unscaled logits; values other than
+        ``1.0`` enable stochastic sampling.
+    top_k:
+        If provided, restrict sampling to the top ``k`` tokens at each step.
     """
     model.eval()
     device = next(model.parameters()).device
@@ -69,7 +76,21 @@ def decode(
             )
 
             logits = model.out(dec_out)
-            next_token = logits[:, -1].argmax(-1)
+            step_logits = logits[:, -1, :]
+
+            if top_k is None and temperature == 1.0:
+                next_token = step_logits.argmax(-1)
+            else:
+                step_logits = step_logits / temperature
+                if top_k is not None:
+                    k = min(top_k, step_logits.size(-1))
+                    values, indices = torch.topk(step_logits, k)
+                    mask = torch.full_like(step_logits, float("-inf"))
+                    mask.scatter_(1, indices, values)
+                    step_logits = mask
+                probs = torch.softmax(step_logits, dim=-1)
+                next_token = torch.multinomial(probs, 1).squeeze(-1)
+
             generated[:, t] = next_token
             if (next_token == tokenizer.pad_idx).all():
                 break
@@ -87,6 +108,8 @@ def decode_batch(
     tokenizer: Tokenizer,
     max_len: int,
     truncate_lens: Optional[Sequence[int]] = None,
+    temperature: float = 1.0,
+    top_k: Optional[int] = None,
 ) -> List[str]:
     """Decode a batch of latent vectors.
 
@@ -95,14 +118,37 @@ def decode_batch(
     truncate_lens:
         Optional sequence of lengths used to truncate each decoded sequence.
         If ``None`` (default), sequences are returned unmodified.
+    temperature:
+        Sampling temperature passed to :func:`decode`.
+    top_k:
+        Top-k value passed to :func:`decode`.
     """
 
     if truncate_lens is None:
-        return [decode(model, z, tokenizer, max_len) for z in Z]
+        return [
+            decode(
+                model,
+                z,
+                tokenizer,
+                max_len,
+                temperature=temperature,
+                top_k=top_k,
+            )
+            for z in Z
+        ]
 
     if len(truncate_lens) != len(Z):
         raise ValueError("truncate_lens must match batch size")
 
     return [
-        decode(model, z, tokenizer, max_len, tlen) for z, tlen in zip(Z, truncate_lens)
+        decode(
+            model,
+            z,
+            tokenizer,
+            max_len,
+            tlen,
+            temperature=temperature,
+            top_k=top_k,
+        )
+        for z, tlen in zip(Z, truncate_lens)
     ]
