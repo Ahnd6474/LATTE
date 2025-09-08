@@ -19,15 +19,16 @@
 2. [Method](#method)
 3. [Architecture Diagram](#architecture-diagram)
 4. [Installation](#installation)
-5. [Quick Start](#quick-start)
-6. [Repository Structure](#repository-structure)
-7. [Pre-trained Models](#pre-trained-models)
-8. [Reproducing Paper Results](#reproducing-paper-results)
-9. [Benchmarks](#benchmarks)
-10. [Citation](#citation)
-11. [Availability and Implementation](#availability-and-implementation)
-12. [License](#license)
-13. [Contact](#contact)
+5. [Getting Started](#getting-started)
+6. [Quick Start](#quick-start)
+7. [Repository Structure](#repository-structure)
+8. [Pre-trained Models](#pre-trained-models)
+9. [Reproducing Paper Results](#reproducing-paper-results)
+10. [Benchmarks](#benchmarks)
+11. [Citation](#citation)
+12. [Availability and Implementation](#availability-and-implementation)
+13. [License](#license)
+14. [Contact](#contact)
 
 ---
 
@@ -82,25 +83,42 @@ conda activate latent-gpt
 
 # 3) Python deps
 pip install -r requirements.txt
+
+# 4) Fetch pre-trained weights (uses Git LFS)
+git lfs install
+git lfs pull
 ```
 
 ---
 
+## Getting Started
+
+After installation, download the example weights and run the demo script to
+verify your setup:
+
+```bash
+git lfs pull                      # downloads models/vae_epoch380.pt
+python usage/usage_example.py     # encodes/decodes a toy sequence
+```
+
+The script prints the original sequence, latent vector shape, and its
+reconstruction.
+
+---
+
 ## Quick Start
+
+Use the API interactively:
 
 ```python
 from vae_module import Tokenizer, Config, load_vae, encode, decode
 
 cfg = Config(model_path="models/vae_epoch380.pt")
 tok = Tokenizer.from_esm()
-
-model = load_vae(cfg,
-                 vocab_size=len(tok.vocab),
-                 pad_idx=tok.pad_idx,
-                 bos_idx=tok.bos_idx)
+model = load_vae(cfg, len(tok.vocab), tok.pad_idx, tok.bos_idx)
 
 seq = "MKTFFVLLLACTIVCLLA"
-z   = encode(model, seq, tok, cfg.max_len)
+z = encode(model, seq, tok, cfg.max_len)
 new_seq = decode(model, z, tok, cfg.max_len)
 print(new_seq)
 ```
