@@ -17,6 +17,13 @@ def _band_memory_mask(t: int, mem_len: int, band: int, device):
     mask   = torch.full((t, mem_len), 0.0, device=device)
     mask[dist > band] = float("-inf")
     return mask
+# ---------------------------
+def _assert_tokenizer_and_embed(tokenizer, model):
+    assert tokenizer.pad_idx != tokenizer.bos_idx != getattr(tokenizer, "eos_idx", -9999), \
+        f"PAD/BOS/EOS index overlap? pad={tokenizer.pad_idx}, bos={tokenizer.bos_idx}, eos={getattr(tokenizer, 'eos_idx', None)}"
+    if hasattr(model, "dec_emb") and hasattr(model.dec_emb, "padding_idx"):
+        assert model.dec_emb.padding_idx == tokenizer.pad_idx, \
+            f"dec_emb.padding_idx({model.dec_emb.padding_idx}) != tokenizer.pad_idx({tokenizer.pad_idx})"
 @torch.no_grad()
 def decode(
     model,
