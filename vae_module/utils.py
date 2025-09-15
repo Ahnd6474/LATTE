@@ -5,12 +5,15 @@ import torch
 from .exceptions import InvalidSequenceError, SequenceLengthError
 
 
-def sequence_to_tensor(seq: str, tokenizer: "Tokenizer", max_len: int) -> torch.LongTensor:
+def sequence_to_tensor(seq: str, tokenizer: "Tokenizer", max_len: int,strict=True) -> torch.LongTensor:
     """Convert a string sequence to tensor of token IDs."""
     if any(c not in tokenizer.vocab for c in seq):
         raise InvalidSequenceError(seq)
-    if len(seq) > max_len:
-        raise SequenceLengthError(len(seq), max_len)
+    if strict:
+        if len(seq) > max_len:
+            raise SequenceLengthError(len(seq), max_len)
+    else:
+        seq[:max_len]
     ids = [tokenizer.get_idx(c) for c in seq]
     return torch.tensor(ids, dtype=torch.long)
 
