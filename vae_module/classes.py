@@ -87,4 +87,4 @@ class SequenceDataset(Dataset):
         from .utils import sequence_to_tensor
 
         seq = self.sequences[idx]
-        return sequence_to_tensor(seq, self.tokenizer, self.max_len)
+        return sequence_to_tensor(seq, self.tokenizer, self.max_len,strict=False)
