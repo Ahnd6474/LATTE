@@ -9,109 +9,90 @@ from .classes import Tokenizer
 from .utils import tensor_to_sequence
 
 logger = setup_logger(__name__)
-
+def _band_memory_mask(t: int, mem_len: int, band: int, device):
+    # (t, mem_len): 밴드 안=0.0, 바깥=-inf (가산 마스크)
+    idx_t  = torch.arange(t, device=device).unsqueeze(1)      # (t,1)
+    idx_m  = torch.arange(mem_len, device=device).unsqueeze(0) # (1,mem_len)
+    dist   = (idx_t - idx_m).abs()
+    mask   = torch.full((t, mem_len), 0.0, device=device)
+    mask[dist > band] = float("-inf")
+    return mask
+@torch.no_grad()
 def decode(
-    model: VAEWithSurrogate,
+    model,
     z: torch.Tensor,
-    tokenizer: Tokenizer,
+    tokenizer,
     max_len: int,
     truncate_len: Optional[int] = None,
     temperature: float = 1.0,
     top_k: Optional[int] = None,
     surrogate: bool = True,
-    x_gt_ids: Optional[torch.Tensor] = None
+    x_gt_ids: Optional[torch.Tensor] = None,
+    use_diag_band: bool = True,     # ★ 추가: 대각선 밴드 마스크 사용
+    band_width: int = 8             # ★ 추가: 허용 밴드 폭 |t-i|≤w
 ) -> str:
-    """Free-run AR decoding. surrogate=True면 surrogate(z) 메모리를 사용. (EOS 미사용)"""
     model.eval()
     device = next(model.parameters()).device
-    z = z.unsqueeze(0).to(device)
+    _assert_tokenizer_and_embed(tokenizer, model)
 
-    # 임베딩 padding_idx 안전 가드
-    if hasattr(model, "dec_emb") and hasattr(model.dec_emb, "padding_idx"):
-        assert model.dec_emb.padding_idx == tokenizer.pad_idx, \
-            f"dec_emb.padding_idx({model.dec_emb.padding_idx}) != tokenizer.pad_idx({tokenizer.pad_idx})"
+    z = z.flatten().unsqueeze(0).to(device)
 
-    # 생성 버퍼
     generated = torch.full((1, max_len), tokenizer.pad_idx, device=device, dtype=torch.long)
     generated[:, 0] = tokenizer.bos_idx
 
-    # causal mask
     full_tgt_mask = torch.triu(
         torch.full((max_len, max_len), float("-inf"), device=device), diagonal=1
     )
 
-    # ── memory 구성 ─────────────────────────────────────────────
-    if surrogate and getattr(model, "surrogate", None) is not None:
-        if x_gt_ids is not None:
-            if x_gt_ids.dim() == 1:
-                x_gt_ids = x_gt_ids.unsqueeze(0)
-            x_gt_ids = x_gt_ids.to(device)
-            with torch.no_grad():
-                _, enc_mask = model.encoder(x_gt_ids)       # enc_mask: True==valid 가정
-            mem_valid = enc_mask.to(torch.bool)
+    memory, mem_pad_mask = build_memory_from_z(model, z, max_len, x_gt_ids, use_surrogate=surrogate)
+    mem_len = memory.size(1)
+
+    for t in range(1, max_len):
+        tok_emb = model.dec_emb(generated[:, :t])
+        pos_emb = model.dec_pos[:, :t, :]
+        z_emb  = model.latent2emb(z).unsqueeze(1).expand(-1, t, -1)
+        tgt = tok_emb + pos_emb + z_emb
+
+        # ★★ 핵심: 대각선 밴드 메모리 마스크 (t, mem_len)
+        mem_bias = None
+        if use_diag_band:
+            mem_bias = _band_memory_mask(t, mem_len, band_width, device)
+
+        dec_out = model.decoder(
+            tgt=tgt,
+            memory=memory,
+            tgt_mask=full_tgt_mask[:t, :t],
+            memory_mask=mem_bias,               # ★ 여기!
+            memory_key_padding_mask=mem_pad_mask,
+        )
+        dec_out = _ensure_batch_time(dec_out, B_expected=generated.size(0))
+        step_logits = model.out(dec_out)[:, -1, :]
+
+        if top_k is None and (temperature is None or temperature == 1.0):
+            next_token = step_logits.argmax(-1)
         else:
-            mem_len = getattr(model.surrogate, "mem_len", max_len)
-            mem_valid = torch.ones(1, mem_len, dtype=torch.bool, device=device)
-        memory, _ = model.surrogate(z, mem_valid, causal_self=False) # (1, Lm, D)
-    else:
-        mem_len = getattr(model.surrogate, "mem_len", max_len) if getattr(model, "surrogate", None) else max_len
-        memory = torch.zeros(1, mem_len, model.dec_emb.embedding_dim, device=device)
-        mem_valid = torch.ones(1, mem_len, dtype=torch.bool, device=device)
+            temp = 1.0 if (temperature is None) else float(temperature)
+            if temp <= 0:
+                raise ValueError("temperature must be > 0")
+            step_logits = step_logits / temp
+            if top_k is not None:
+                k = max(1, min(int(top_k), step_logits.size(-1)))
+                vals, idxs = torch.topk(step_logits, k, dim=-1)
+                masked = torch.full_like(step_logits, float("-inf"))
+                masked.scatter_(1, idxs, vals)
+                step_logits = masked
+            probs = torch.softmax(step_logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1).squeeze(-1)
 
-    # TransformerDecoder: memory_key_padding_mask에서 True==pad(무시) 이므로 뒤집기
-    mem_pad_mask = ~mem_valid[:, :memory.size(1)]
-    # ───────────────────────────────────────────────────────────
+        generated[:, t] = next_token
+        if (next_token == tokenizer.pad_idx).all():
+            break
 
-    # AR 생성 루프 (EOS 미사용, PAD로만 종료)
-    with torch.no_grad():
-        for t in range(1, max_len):
-            tok_emb = model.dec_emb(generated[:, :t])        # (1, t, D)
-            pos_emb = model.dec_pos[:, :t, :]                # (1, t, D)
-            z_emb  = model.latent2emb(z).unsqueeze(1).expand(-1, t, -1)
-            tgt = tok_emb + pos_emb + z_emb                  # (1, t, D)
-
-            dec_out = model.decoder(
-                tgt=tgt,
-                memory=memory,
-                tgt_mask=full_tgt_mask[:t, :t],
-                memory_key_padding_mask=mem_pad_mask,
-            )
-            # (T,B,D) 대비 가드 → 항상 (B,T,D)
-            if dec_out.dim() == 3 and dec_out.size(0) != generated.size(0):
-                dec_out = dec_out.transpose(0, 1)
-
-            step_logits = model.out(dec_out)[:, -1, :]       # (B,V)
-
-            # 샘플링
-            if top_k is None and (temperature is None or temperature == 1.0):
-                next_token = step_logits.argmax(-1)
-            else:
-                temp = 1.0 if (temperature is None) else float(temperature)
-                if temp <= 0:
-                    raise ValueError("temperature must be > 0")
-                step_logits = step_logits / temp
-                if top_k is not None:
-                    k = max(1, min(int(top_k), step_logits.size(-1)))
-                    vals, idxs = torch.topk(step_logits, k, dim=-1)  # idxs: 원 vocab id
-                    masked = torch.full_like(step_logits, float("-inf"))
-                    masked.scatter_(1, idxs, vals)                   # 원 vocab 공간 내 마스킹
-                    step_logits = masked
-                probs = torch.softmax(step_logits, dim=-1)
-                next_token = torch.multinomial(probs, num_samples=1).squeeze(-1)
-
-            generated[:, t] = next_token
-
-            # PAD 나오면 종료(원 동작 유지)
-            if (next_token == tokenizer.pad_idx).all():
-                break
-
-    # 시퀀스 추출 (EOS 미트림)
     ids = generated[0]
     seq = tensor_to_sequence(ids, tokenizer)
     if truncate_len is not None:
         seq = seq[:truncate_len]
     return seq
-
 
 
 def decode_batch(
