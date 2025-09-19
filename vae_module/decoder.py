@@ -1,29 +1,59 @@
-from typing import List, Sequence, Optional
+from typing import List, Optional, Sequence, Tuple
 
 import torch
-from tqdm import trange
 
+from .classes import Tokenizer
 from .logger import setup_logger
 from .model import VAEWithSurrogate
-from .classes import Tokenizer
 from .utils import tensor_to_sequence
 
 logger = setup_logger(__name__)
-def _band_memory_mask(t: int, mem_len: int, band: int, device):
-    # (t, mem_len): 밴드 안=0.0, 바깥=-inf (가산 마스크)
-    idx_t  = torch.arange(t, device=device).unsqueeze(1)      # (t,1)
-    idx_m  = torch.arange(mem_len, device=device).unsqueeze(0) # (1,mem_len)
-    dist   = (idx_t - idx_m).abs()
-    mask   = torch.full((t, mem_len), 0.0, device=device)
-    mask[dist > band] = float("-inf")
-    return mask
-# ---------------------------
-def _assert_tokenizer_and_embed(tokenizer, model):
-    assert tokenizer.pad_idx != tokenizer.bos_idx != getattr(tokenizer, "eos_idx", -9999), \
-        f"PAD/BOS/EOS index overlap? pad={tokenizer.pad_idx}, bos={tokenizer.bos_idx}, eos={getattr(tokenizer, 'eos_idx', None)}"
+
+
+def _assert_tokenizer_and_embed(tokenizer: Tokenizer, model: VAEWithSurrogate) -> None:
+    assert tokenizer.pad_idx != tokenizer.bos_idx != getattr(
+        tokenizer, "eos_idx", -9999
+    ), (
+        "PAD/BOS/EOS index overlap? "
+        f"pad={tokenizer.pad_idx}, bos={tokenizer.bos_idx}, eos={getattr(tokenizer, 'eos_idx', None)}"
+    )
     if hasattr(model, "dec_emb") and hasattr(model.dec_emb, "padding_idx"):
-        assert model.dec_emb.padding_idx == tokenizer.pad_idx, \
-            f"dec_emb.padding_idx({model.dec_emb.padding_idx}) != tokenizer.pad_idx({tokenizer.pad_idx})"
+        assert model.dec_emb.padding_idx == tokenizer.pad_idx, (
+            f"dec_emb.padding_idx({model.dec_emb.padding_idx}) != "
+            f"tokenizer.pad_idx({tokenizer.pad_idx})"
+        )
+
+
+def _prepare_latent(z: torch.Tensor, device: torch.device) -> torch.Tensor:
+    z = z.to(device)
+    if z.dim() == 1:
+        z = z.unsqueeze(0)
+    return z
+
+
+def build_memory_from_z(
+    model: VAEWithSurrogate,
+    z: torch.Tensor,
+    max_len: int,
+    x_gt_ids: Optional[torch.Tensor],
+    use_surrogate: bool,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Construct decoder memory given a latent vector."""
+
+    if use_surrogate and getattr(model, "build_surrogate_memory", None) is not None:
+        return model.build_surrogate_memory(z, x_gt_ids=x_gt_ids)
+
+    if x_gt_ids is None:
+        raise ValueError("x_gt_ids must be provided when surrogate decoding is disabled")
+
+    if x_gt_ids.dim() == 1:
+        x_gt_ids = x_gt_ids.unsqueeze(0)
+    x_gt_ids = x_gt_ids[:, :max_len].to(z.device)
+    memory, enc_mask = model.encoder(x_gt_ids)
+    mem_pad_mask = ~enc_mask
+    return memory, mem_pad_mask
+
+
 @torch.no_grad()
 def decode(
     model,
@@ -35,59 +65,56 @@ def decode(
     top_k: Optional[int] = None,
     surrogate: bool = True,
     x_gt_ids: Optional[torch.Tensor] = None,
-    use_diag_band: bool = True,     # ★ 추가: 대각선 밴드 마스크 사용
-    band_width: int = 8             # ★ 추가: 허용 밴드 폭 |t-i|≤w
+    use_diag_band: bool = True,
+    band_width: int = 8,
 ) -> str:
+    """Decode a single latent vector into a sequence."""
+
+    del band_width  # kept for backward compatibility
+
     model.eval()
     device = next(model.parameters()).device
     _assert_tokenizer_and_embed(tokenizer, model)
 
-    z = z.flatten().unsqueeze(0).to(device)
+    z = _prepare_latent(z, device)
+    model._z_cached = z
 
-    generated = torch.full((1, max_len), tokenizer.pad_idx, device=device, dtype=torch.long)
-    generated[:, 0] = tokenizer.bos_idx
-
-    full_tgt_mask = torch.triu(
-        torch.full((max_len, max_len), float("-inf"), device=device), diagonal=1
+    memory, mem_pad_mask = build_memory_from_z(
+        model, z, max_len, x_gt_ids=x_gt_ids, use_surrogate=surrogate
     )
 
-    memory, mem_pad_mask = build_memory_from_z(model, z, max_len, x_gt_ids, use_surrogate=surrogate)
-    mem_len = memory.size(1)
+    generated = torch.full((z.size(0), max_len), tokenizer.pad_idx, device=device, dtype=torch.long)
+    generated[:, 0] = tokenizer.bos_idx
+
+    use_bias = bool(model.diag_bias) if use_diag_band else False
 
     for t in range(1, max_len):
-        tok_emb = model.dec_emb(generated[:, :t])
-        pos_emb = model.dec_pos[:, :t, :]
-        z_emb  = model.latent2emb(z).unsqueeze(1).expand(-1, t, -1)
-        tgt = tok_emb + pos_emb + z_emb
-
-        # ★★ 핵심: 대각선 밴드 메모리 마스크 (t, mem_len)
-        mem_bias = None
-        if use_diag_band:
-            mem_bias = _band_memory_mask(t, mem_len, band_width, device)
-
-        dec_out = model.decoder(
-            tgt=tgt,
-            memory=memory,
-            tgt_mask=full_tgt_mask[:t, :t],
-            memory_mask=mem_bias,               # ★ 여기!
-            memory_key_padding_mask=mem_pad_mask,
+        logits = model.decode_step(
+            generated[:, :t],
+            memory,
+            mem_pad_mask,
+            tokenizer=tokenizer,
+            use_bias=use_bias,
         )
-        dec_out = _ensure_batch_time(dec_out, B_expected=generated.size(0))
-        step_logits = model.out(dec_out)[:, -1, :]
+
+        if temperature is None or temperature == 1.0:
+            step_logits = logits
+        else:
+            temp = float(temperature)
+            if temp <= 0:
+                raise ValueError("temperature must be > 0")
+            step_logits = logits / temp
+
+        if top_k is not None:
+            k = max(1, min(int(top_k), step_logits.size(-1)))
+            vals, idxs = torch.topk(step_logits, k, dim=-1)
+            masked = torch.full_like(step_logits, float("-inf"))
+            masked.scatter_(1, idxs, vals)
+            step_logits = masked
 
         if top_k is None and (temperature is None or temperature == 1.0):
             next_token = step_logits.argmax(-1)
         else:
-            temp = 1.0 if (temperature is None) else float(temperature)
-            if temp <= 0:
-                raise ValueError("temperature must be > 0")
-            step_logits = step_logits / temp
-            if top_k is not None:
-                k = max(1, min(int(top_k), step_logits.size(-1)))
-                vals, idxs = torch.topk(step_logits, k, dim=-1)
-                masked = torch.full_like(step_logits, float("-inf"))
-                masked.scatter_(1, idxs, vals)
-                step_logits = masked
             probs = torch.softmax(step_logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1).squeeze(-1)
 
@@ -111,18 +138,7 @@ def decode_batch(
     temperature: float = 1.0,
     top_k: Optional[int] = None,
 ) -> List[str]:
-    """Decode a batch of latent vectors.
-
-    Parameters
-    ----------
-    truncate_lens:
-        Optional sequence of lengths used to truncate each decoded sequence.
-        If ``None`` (default), sequences are returned unmodified.
-    temperature:
-        Sampling temperature passed to :func:`decode`.
-    top_k:
-        Top-k value passed to :func:`decode`.
-    """
+    """Decode a batch of latent vectors."""
 
     if truncate_lens is None:
         return [
