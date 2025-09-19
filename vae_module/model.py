@@ -1,4 +1,6 @@
-from typing import Tuple, Optional
+import math
+import os
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -11,34 +13,53 @@ NUM_HEADS = 8
 FFN_DIM = 512
 MAX_LEN = 512
 
-# ===============================
-# 1) 가우시안 정렬 바이어스 모듈
-# ===============================
-import os
-import torch
-import torch.nn as nn
 
 class CrossDiagBias(nn.Module):
-    """i ≈ a*t + δ 근방을 선호하도록 cross-attn 로짓에 -α*(i-(a t+δ))^2 가산."""
-    def __init__(self, max_mem_len: int, init_alpha: float = 0.05, init_a: float = 1.0, init_delta: float = 0.0):
+    """Gaussian alignment bias with optional hard band masking."""
+
+    def __init__(
+        self,
+        init_alpha: float = 0.05,
+        a_span: float = 0.5,
+        d_span: float = 0.15,
+        band_W_tokens: int = 8,
+    ) -> None:
         super().__init__()
-        self.max_mem = int(max_mem_len)
-        self.alpha = nn.Parameter(torch.tensor(float(init_alpha)))  # > 0
-        self.a     = nn.Parameter(torch.tensor(float(init_a)))
-        self.delta = nn.Parameter(torch.tensor(float(init_delta)))
+        self.alpha = nn.Parameter(torch.tensor(float(init_alpha)))
+        self.a_raw = nn.Parameter(torch.zeros(1))
+        self.d_raw = nn.Parameter(torch.zeros(1))
+        self.a_span = float(a_span)
+        self.d_span = float(d_span)
+        self.band_W_tokens = int(band_W_tokens)
 
     @torch.no_grad()
-    def clamp_(self, min_alpha: float = 1e-6, max_alpha: float = 1.0):
+    def clamp_alpha_(self, min_alpha: float = 1e-6, max_alpha: float = 1.0) -> None:
+        """Clamp the learned ``alpha`` parameter to keep the bias stable."""
+
         self.alpha.clamp_(min_alpha, max_alpha)
 
-    def forward(self, t: int, device: torch.device) -> torch.Tensor:
-        """(t, M) 가산형 로짓 바이어스 반환 (PyTorch TransformerDecoder에 memory_mask로 전달 가능)."""
-        tt = torch.arange(t, device=device).unsqueeze(1).float()             # (t,1)
-        mm = torch.arange(self.max_mem, device=device).unsqueeze(0).float()  # (1,M)
-        center = self.a * tt + self.delta
-        dist2  = (center - mm) ** 2
-        alpha  = torch.clamp(self.alpha, 1e-6, 1.0)
-        return -alpha * dist2  # (t,M)
+    def forward(self, T: int, M: int, device: torch.device) -> torch.Tensor:
+        """Return an additive bias mask shaped ``(T, M)`` for cross attention."""
+
+        t = torch.linspace(0.0, 1.0, T, device=device)[:, None]
+        i = torch.linspace(0.0, 1.0, M, device=device)[None, :]
+
+        a = 1.0 + self.a_span * torch.tanh(self.a_raw)
+        d = self.d_span * torch.tanh(self.d_raw)
+
+        m_hat_norm = (a * t + d).clamp(0.0, 1.0)
+        m_hat_idx = m_hat_norm * (M - 1)
+
+        alpha = self.alpha.clamp_min(1e-6)
+        i_idx = torch.arange(M, device=device, dtype=m_hat_idx.dtype)[None, :]
+        bias = -alpha * (i_idx - m_hat_idx).pow(2)
+
+        if self.band_W_tokens > 0:
+            W = max(1, int(self.band_W_tokens * M / max(T, 1)))
+            band = (i_idx - m_hat_idx).abs() <= W
+            bias = bias.masked_fill(~band, float("-inf"))
+
+        return bias
 
 
 class SmallTransformer(nn.Module):
@@ -61,7 +82,8 @@ class SmallTransformer(nn.Module):
         self.ln = nn.LayerNorm(emb_dim)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        mask = x != self.emb.padding_idx
+        pad_idx = self.emb.padding_idx if self.emb.padding_idx is not None else 0
+        mask = x != pad_idx
         h = self.emb(x) + self.pos[:, : x.size(1), :]
         h = self.enc(h, src_key_padding_mask=~mask)
         return self.ln(h), mask
@@ -98,7 +120,8 @@ class VAETransformerDecoder(nn.Module):
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor):
         h_enc, enc_mask = self.encoder(x)
-        pooled = (h_enc * enc_mask.unsqueeze(-1)).sum(1) / enc_mask.sum(1, True)
+        denom = enc_mask.sum(1, keepdim=True).clamp_min(1)
+        pooled = (h_enc * enc_mask.unsqueeze(-1)).sum(1) / denom
         mu, logvar = self.to_mu(pooled), self.to_logvar(pooled)
         z = mu + torch.randn_like(mu) * torch.exp(0.5 * logvar)
 
@@ -180,16 +203,17 @@ class VAEWithSurrogate(nn.Module):
         vae: VAETransformerDecoder,
         surrogate: Optional[Z2MemorySurrogate] = None,
         use_sur_ln: bool = True,
+        use_sur_gate: bool = True,
         use_diag_bias: bool = True,
         diag_init_alpha: float = 0.05,
-        diag_init_a: float = 1.0,
-        diag_init_delta: float = 0.0,
+        diag_a_span: float = 0.5,
+        diag_d_span: float = 0.15,
+        diag_band_W: int = 8,
     ) -> None:
         super().__init__()
         self.vae = vae
         self.surrogate = surrogate
 
-        # 기존 편의 alias (원 코드 유지)
         for name in [
             "encoder",
             "decoder",
@@ -202,52 +226,66 @@ class VAEWithSurrogate(nn.Module):
         ]:
             setattr(self, name, getattr(vae, name))
 
-        # (선택) surrogate 출력 뒤 LayerNorm — γ/β도 state_dict에 포함됨
-        self.sur_ln = nn.LayerNorm(self.dec_emb.embedding_dim, elementwise_affine=True) if use_sur_ln else None
+        d_model = self.dec_emb.embedding_dim
+        self.sur_ln = nn.LayerNorm(d_model, elementwise_affine=True) if use_sur_ln else None
+        self.use_sur_gate = bool(use_sur_gate)
+        self.sur_gate = (
+            nn.Parameter(torch.full((d_model,), math.log(0.3 / 0.7)))
+            if use_sur_gate
+            else None
+        )
 
-        # (선택) 가우시안 정렬 바이어스 — 파라미터(α,a,δ) state_dict에 포함됨
-        if use_diag_bias:
-            mem_len = MAX_LEN
-            if surrogate is not None and hasattr(surrogate, "pos"):
-                try:
-                    mem_len = int(surrogate.pos.size(1))
-                except Exception:
-                    pass
-            self.diag_bias = CrossDiagBias(mem_len, diag_init_alpha, diag_init_a, diag_init_delta)
-        else:
-            self.diag_bias = None
+        self.diag_bias = (
+            CrossDiagBias(
+                init_alpha=diag_init_alpha,
+                a_span=diag_a_span,
+                d_span=diag_d_span,
+                band_W_tokens=diag_band_W,
+            )
+            if use_diag_bias
+            else None
+        )
+
+        self._z_cached: Optional[torch.Tensor] = None
 
     # -------------------------
     # Surrogate 메모리 구성 헬퍼
     # -------------------------
     @torch.no_grad()
-    def build_surrogate_memory(self, z: torch.Tensor, x_gt_ids: Optional[torch.Tensor] = None):
-        """
-        반환: memory (1,M,D), mem_pad_mask (1,M)  (True==PAD)
-        """
+    def build_surrogate_memory(
+        self, z: torch.Tensor, x_gt_ids: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Return surrogate decoder memory and its padding mask."""
+
         device = next(self.parameters()).device
-        z = z.flatten().unsqueeze(0).to(device)
+        z = z.to(device)
+        if z.dim() == 1:
+            z = z.unsqueeze(0)
+        B = z.size(0)
+
         if self.surrogate is None:
             M = MAX_LEN
-            memory = torch.zeros(1, M, self.dec_emb.embedding_dim, device=device)
-            mem_valid = torch.ones(1, M, dtype=torch.bool, device=device)
+            memory = torch.zeros(B, M, self.dec_emb.embedding_dim, device=device)
+            mem_valid = torch.ones(B, M, dtype=torch.bool, device=device)
         else:
             if x_gt_ids is not None:
                 if x_gt_ids.dim() == 1:
                     x_gt_ids = x_gt_ids.unsqueeze(0)
                 x_gt_ids = x_gt_ids.to(device)
-                _, enc_mask = self.encoder(x_gt_ids)  # True==valid
+                _, enc_mask = self.encoder(x_gt_ids)
                 mem_valid = enc_mask.to(torch.bool)
             else:
                 M = int(self.surrogate.pos.size(1))
-                mem_valid = torch.ones(1, M, dtype=torch.bool, device=device)
+                mem_valid = torch.ones(B, M, dtype=torch.bool, device=device)
             memory, _ = self.surrogate(z, mem_valid, causal_self=False)
 
-        # (선택) surrogate 출력 정규화
         if self.sur_ln is not None:
             memory = self.sur_ln(memory)
+        if self.use_sur_gate and self.sur_gate is not None:
+            gate = torch.sigmoid(self.sur_gate)
+            memory = memory * gate
 
-        mem_pad_mask = ~mem_valid  # True==PAD(무시)
+        mem_pad_mask = ~mem_valid
         return memory, mem_pad_mask
 
     # -------------------------
@@ -262,11 +300,14 @@ class VAEWithSurrogate(nn.Module):
         """
         device = prefix_ids.device
         B, T = prefix_ids.size()
+        M = memory.size(1)
 
-        tok = self.dec_emb(prefix_ids)                 # (B,T,D)
-        pos = self.dec_pos[:, :T, :]                   # (1,T,D)
-        if not hasattr(self, "_z_cached"):
-            raise RuntimeError("self._z_cached가 없습니다. 학습/추론 루프에서 self._z_cached = z (B,D)로 세팅하세요.")
+        tok = self.dec_emb(prefix_ids)
+        pos = self.dec_pos[:, :T, :]
+        if self._z_cached is None:
+            raise RuntimeError(
+                "self._z_cached가 없습니다. 학습/추론 루프에서 self._z_cached = z (B,D)로 세팅하세요."
+            )
         z_emb = self.latent2emb(self._z_cached).unsqueeze(1).expand(-1, T, -1)
         tgt = tok + pos + z_emb
 
@@ -274,7 +315,7 @@ class VAEWithSurrogate(nn.Module):
 
         memory_mask = None
         if use_bias and (self.diag_bias is not None):
-            memory_mask = self.diag_bias(int(T), device=device)  # (T,M)
+            memory_mask = self.diag_bias(T, M, device=device)
 
         h = self.decoder(
             tgt=tgt,
@@ -286,9 +327,14 @@ class VAEWithSurrogate(nn.Module):
         if h.dim() == 3 and h.size(0) != B:  # (T,B,D) → (B,T,D)
             h = h.transpose(0, 1)
         logits = self.out(h)[:, -1, :]       # (B,V)
-        if tokenizer is not None and hasattr(tokenizer, "pad_idx"):
-            logits[:, tokenizer.pad_token] = -float("inf") if hasattr(tokenizer, "pad_token") else -float("inf")
-            logits[:, tokenizer.pad_idx] = -float("inf")
+        if tokenizer is not None:
+            pad_idx = getattr(
+                tokenizer, "pad_idx", getattr(tokenizer, "pad_token_id", self.pad_token)
+            )
+            if pad_idx is not None:
+                logits[:, int(pad_idx)] = -float("inf")
+        else:
+            logits[:, int(self.pad_token)] = -float("inf")
         return logits
 
     # -------------------------
@@ -317,3 +363,18 @@ class VAEWithSurrogate(nn.Module):
         if optimizer is not None and "optimizer_state" in ckpt:
             optimizer.load_state_dict(ckpt["optimizer_state"])
         return ckpt
+
+
+def guided_alignment_kl(
+    attn_probs: torch.Tensor, m_hat_idx: torch.Tensor, sigma: float
+) -> torch.Tensor:
+    """Compute KL(attn || Gaussian) for alignment guidance during training."""
+
+    B, H, T, M = attn_probs.shape
+    device = attn_probs.device
+    i_idx = torch.arange(M, device=device).float()[None, None, None, :]
+    m = m_hat_idx[..., None]
+    gauss = torch.exp(-((i_idx - m).pow(2)) / (2.0 * (sigma ** 2)))
+    gauss = gauss / (gauss.sum(-1, keepdim=True) + 1e-9)
+    kl = (attn_probs.clamp_min(1e-9).log() - gauss.clamp_min(1e-9).log()) * attn_probs
+    return kl.sum(dim=-1).mean()
