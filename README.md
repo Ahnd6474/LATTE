@@ -1,4 +1,4 @@
-# ZART (Latent GPT)
+# ZART
 **Z**-**A**utoregressive **R**econstruction with **T**ransformer — a **structure‑informed protein VAE** with a latent‑conditioned autoregressive decoder.
 
 <p align="center">
@@ -8,7 +8,7 @@
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
 
-> **ZART** (a.k.a. **Latent GPT**) is a **structure‑aware protein VAE** that aligns reconstructions to **pretrained ESMS/ESM2 embeddings** via a perceptual loss (**COS + MSE**). This keeps the latent space **active (KL ≈ 0.05)** and informative for downstream tasks. ZART reaches **97.17%** reconstruction on UniRef50 and **ProteinGym Spearman’s ρ = 0.7779 (≤512 aa, 162 sets) / 0.689 (all 217)**. On fluorescent‑protein (FP) tasks, it achieves **0.987** (5‑fold accuracy) and **2.70 / 3.80 nm** RMSE for absorption/emission prediction.
+> **ZART**  is a **structure‑aware protein VAE** that aligns reconstructions to **pretrained ESMS/ESM2 embeddings** via a perceptual loss (**COS + MSE**). This keeps the latent space **active (KL ≈ 0.05)** and informative for downstream tasks. ZART reaches **97.17%** reconstruction on UniRef50 and **ProteinGym Spearman’s ρ = 0.7779 (≤512 aa, 162 sets) / 0.689 (all 217)**. On fluorescent‑protein (FP) tasks, it achieves **0.987** (5‑fold accuracy) and **2.70 / 3.80 nm** RMSE for absorption/emission prediction.
 
 ---
 
