@@ -1,6 +1,7 @@
 import pickle
 from collections import OrderedDict
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any, Optional
 
 import torch
@@ -221,6 +222,40 @@ def load_vae(
     return model
 
 
+def _checkpoint_error(path: str, original: Exception) -> CheckpointLoadError:
+    """Return a :class:`CheckpointLoadError` enriched with troubleshooting hints."""
+
+    hints = []
+    file_path = Path(path)
+    try:
+        size = file_path.stat().st_size
+        if size == 0:
+            hints.append("The file is empty.")
+        elif size < 1024:
+            hints.append(
+                "The file is only "
+                f"{size} bytes and looks like a placeholder rather than a checkpoint. "
+                "Run `git lfs pull` to download the actual weights or provide a full"
+                " checkpoint file."
+            )
+        with file_path.open("rb") as handle:
+            head = handle.read(256)
+        if b"git-lfs" in head:
+            hints.append(
+                "It appears to be a Git LFS pointer. Run `git lfs pull` to download the"
+                " actual weights."
+            )
+    except OSError:
+        # If the file cannot be inspected we keep the original error message.
+        pass
+
+    if hints:
+        message = f"{original}. {' '.join(hints)}"
+        wrapped = RuntimeError(message)
+        return CheckpointLoadError(path, wrapped)
+    return CheckpointLoadError(path, original)
+
+
 def _load_checkpoint(path: str, device: torch.device) -> dict:
     """Load a checkpoint while remaining compatible with legacy PyTorch saves."""
 
@@ -234,6 +269,6 @@ def _load_checkpoint(path: str, device: torch.device) -> dict:
         try:
             return torch.load(path, weights_only=False, **load_kwargs)
         except Exception as inner_exc:  # pragma: no cover - fallback should rarely fail
-            raise CheckpointLoadError(path, inner_exc) from inner_exc
+            raise _checkpoint_error(path, inner_exc) from inner_exc
     except (RuntimeError, EOFError, pickle.UnpicklingError) as exc:
-        raise CheckpointLoadError(path, exc) from exc
+        raise _checkpoint_error(path, exc) from exc
