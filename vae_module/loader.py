@@ -25,102 +25,6 @@ from .model import (
 
 logger = setup_logger(__name__)
 
-
-def _strip_diag_bias_keys(state: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Return ``state`` without entries belonging to ``CrossDiagBias``."""
-
-    if not isinstance(state, Mapping):
-        return state
-
-    prefix = "diag_bias."
-    has_diag_keys = any(
-        isinstance(key, str) and key.startswith(prefix) for key in state.keys()
-    )
-    if not has_diag_keys:
-        return state
-
-    items = [
-        (key, value)
-        for key, value in state.items()
-        if not (isinstance(key, str) and key.startswith(prefix))
-    ]
-    if isinstance(state, OrderedDict):
-        return OrderedDict(items)
-    return dict(items)
-
-
-def _extract_diag_bias_state(
-    checkpoint: Mapping[str, Any]
-) -> Optional[OrderedDict[str, torch.Tensor]]:
-    """Extract a ``CrossDiagBias`` state dict from a checkpoint if present."""
-
-    if not isinstance(checkpoint, Mapping):
-        return None
-
-    diag_bias = checkpoint.get("diag_bias")
-    if isinstance(diag_bias, Mapping):
-        diag_items = OrderedDict(
-            (str(key), value)
-            for key, value in diag_bias.items()
-            if isinstance(key, str)
-        )
-        if diag_items:
-            return diag_items
-
-    prefix = "diag_bias."
-
-    def _from_mapping(state: Mapping[str, Any]) -> Optional[OrderedDict[str, torch.Tensor]]:
-        if not isinstance(state, Mapping):
-            return None
-        extracted = OrderedDict(
-            (key[len(prefix) :], value)
-            for key, value in state.items()
-            if isinstance(key, str) and key.startswith(prefix)
-        )
-        return extracted or None
-
-    direct = _from_mapping(checkpoint)
-    if direct is not None:
-        return direct
-
-    for parent_key in ("model_state", "model_sd", "sur_adapter", "vae", "surrogate"):
-        state = checkpoint.get(parent_key)
-        extracted = _from_mapping(state) if isinstance(state, Mapping) else None
-        if extracted is not None:
-            return extracted
-
-    return None
-
-
-def _load_diag_bias_state(model: VAEWithSurrogate, checkpoint: Mapping[str, Any]) -> None:
-    """Load ``CrossDiagBias`` weights if the checkpoint provides them."""
-
-    diag_bias = getattr(model, "diag_bias", None)
-    if diag_bias is None:
-        return
-
-    diag_state = _extract_diag_bias_state(checkpoint)
-    if diag_state is None:
-        logger.info("No diag bias state found in checkpoint; using defaults")
-        return
-
-    load_res = diag_bias.load_state_dict(diag_state, strict=False)
-    if load_res.missing_keys:
-        logger.warning(
-            "Missing keys in diag bias state dict: %s", load_res.missing_keys
-        )
-    else:
-        logger.info("No missing keys in diag bias state dict")
-
-    if load_res.unexpected_keys:
-        logger.warning(
-            "Unexpected keys in diag bias state dict: %s",
-            load_res.unexpected_keys,
-        )
-    else:
-        logger.info("No unexpected keys in diag bias state dict")
-
-
 def load_vae(
     cfg: Config, vocab_size: int, pad_idx: int, bos_idx: int
 ) -> VAEWithSurrogate:
@@ -194,13 +98,10 @@ def load_vae(
                 )
             else:
                 logger.info("No unexpected keys in surrogate state dict")
-        _load_diag_bias_state(model, checkpoint)
         logger.info("Loaded VAE with surrogate from %s on %s", cfg.model_path, device)
     else:
         model = VAEWithSurrogate(vae, None).to(device)
         vae_state = checkpoint.get("model_sd", checkpoint)
-        if isinstance(vae_state, Mapping):
-            vae_state = _strip_diag_bias_keys(vae_state)
         load_res = model.vae.load_state_dict(vae_state, strict=False)
         if load_res.missing_keys:
             logger.warning("Missing keys in VAE state dict: %s", load_res.missing_keys)
@@ -213,8 +114,6 @@ def load_vae(
             )
         else:
             logger.info("No unexpected keys in VAE state dict")
-
-        _load_diag_bias_state(model, checkpoint)
 
         logger.info("Loaded VAE from %s on %s", cfg.model_path, device)
 
