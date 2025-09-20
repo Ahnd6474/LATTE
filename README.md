@@ -82,8 +82,8 @@ ZART is a compact Transformer VAE with **4‑layer encoders/decoders** and a **2
 
 ```bash
 # 1) Clone
-git clone https://github.com/Ahnd6474/Latent-GPT.git
-cd Latent-GPT
+git clone https://github.com/Ahnd6474/ZART.git
+cd ZART
 
 # 2) (Optional) Conda env
 conda create -n zart python=3.9 -y
@@ -180,11 +180,13 @@ If you use this work, please cite:
 
 ```bibtex
 @article{ahn2025zart,
-  title={Latent GPT: A Structure-Informed Variational Autoencoder for Sequence Embedding and De Novo Protein Generation},
+  title={ZART: A Structure-Informed Variational
+Autoencoder for Sequence Embedding and De
+Novo Protein Generation},
   author={Ahn, Danny and Lee, Minjae and Moon, Sihyeon and Jung, Jooyoung},
   journal={Bioinformatics},
   year={2025},
-  doi={10.1093/bioinformatics/btzXXX}
+  doi={}
 }
 ```
 
