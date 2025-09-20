@@ -163,7 +163,7 @@ Reference training used **Kaggle T4 sessions**.
 ## Data & Availability
 
 - **Paper:** Bioinformatics (preprint), DOI pending  
-- **Code & Models:** https://github.com/Ahnd6474/Latent-GPT  
+- **Code & Models:** https://github.com/Ahnd6474/ZART  
 - **FP dataset:** FPbase / Kaggle (see paper for links)
 
 ---
