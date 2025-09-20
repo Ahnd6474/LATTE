@@ -1,7 +1,9 @@
 import torch
 
+import pickle
+
 from .config import Config
-from .exceptions import DeviceNotAvailableError
+from .exceptions import CheckpointLoadError, DeviceNotAvailableError
 from .logger import setup_logger
 from .model import (
     SmallTransformer,
@@ -46,7 +48,7 @@ def load_vae(
         bos_token=bos_idx,
     ).to(device)
 
-    checkpoint = torch.load(cfg.model_path, map_location=device)
+    checkpoint = _load_checkpoint(cfg.model_path, device)
 
     if "bundle_version" in checkpoint:
         sur = Z2MemorySurrogate(
@@ -115,3 +117,21 @@ def load_vae(
 
     model.eval()
     return model
+
+
+def _load_checkpoint(path: str, device: torch.device) -> dict:
+    """Load a checkpoint while remaining compatible with legacy PyTorch saves."""
+
+    load_kwargs = {"map_location": device}
+    try:
+        return torch.load(path, **load_kwargs)
+    except pickle.UnpicklingError as exc:
+        logger.info(
+            "torch.load failed due to weights-only mode; retrying with weights_only=False"
+        )
+        try:
+            return torch.load(path, weights_only=False, **load_kwargs)
+        except Exception as inner_exc:  # pragma: no cover - fallback should rarely fail
+            raise CheckpointLoadError(path, inner_exc) from inner_exc
+    except (RuntimeError, EOFError, pickle.UnpicklingError) as exc:
+        raise CheckpointLoadError(path, exc) from exc

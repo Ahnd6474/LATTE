@@ -13,7 +13,7 @@ def sequence_to_tensor(seq: str, tokenizer: "Tokenizer", max_len: int,strict=Tru
         if len(seq) > max_len:
             raise SequenceLengthError(len(seq), max_len)
     else:
-        seq[:max_len]
+        seq = seq[:max_len]
     ids = [tokenizer.get_idx(c) for c in seq]
     return torch.tensor(ids, dtype=torch.long)
 
