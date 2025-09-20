@@ -53,8 +53,10 @@ def test__load_checkpoint_invalid_file(tmp_path):
     bad_path = tmp_path / "bad.pt"
     bad_path.write_bytes(b"\r\n")
 
-    with pytest.raises(CheckpointLoadError):
+    with pytest.raises(CheckpointLoadError) as excinfo:
         _load_checkpoint(str(bad_path), device)
+
+    assert "git lfs pull" in str(excinfo.value).lower()
 
 
 def test_load_vae_raises_for_invalid_checkpoint():
