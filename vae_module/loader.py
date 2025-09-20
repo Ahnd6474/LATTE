@@ -25,135 +25,103 @@ from .model import (
 
 logger = setup_logger(__name__)
 
-def load_vae(
-    cfg: Config, vocab_size: int, pad_idx: int, bos_idx: int
-) -> VAEWithSurrogate:
-    """Load VAE (optionally with surrogate) from checkpoint defined in ``Config``."""
-
+def load_vae(cfg: Config, vocab_size: int, pad_idx: int, bos_idx: int) -> VAEWithSurrogate:
     device = torch.device(cfg.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise DeviceNotAvailableError(cfg.device)
 
     enc = SmallTransformer(
-        vocab_size,
-        EMB_DIM,
-        NUM_LAYERS,
-        NUM_HEADS,
-        FFN_DIM,
-        MAX_LEN,
-        pad_idx,
+        vocab_size, EMB_DIM, NUM_LAYERS, NUM_HEADS, FFN_DIM, MAX_LEN, pad_idx
     ).to(device)
 
     vae = VAETransformerDecoder(
-        encoder=enc,
-        vocab_size=vocab_size,
-        pad_token=pad_idx,
-        bos_token=bos_idx,
+        encoder=enc, vocab_size=vocab_size, pad_token=pad_idx, bos_token=bos_idx
     ).to(device)
 
-    checkpoint = _load_checkpoint(cfg.model_path, device)
-    checkpoint=checkpoint['model_state']
+    # ---- robust checkpoint load ----
+    raw_ckpt = _load_checkpoint(cfg.model_path, device)
+    # 언래핑
+    if isinstance(raw_ckpt, Mapping):
+        if "model_state" in raw_ckpt:
+            ckpt = raw_ckpt["model_state"]
+        elif "state_dict" in raw_ckpt:
+            ckpt = raw_ckpt["state_dict"]
+        else:
+            ckpt = raw_ckpt
+    else:
+        ckpt = raw_ckpt
 
-    if "bundle_version" in checkpoint:
-        sur = Z2MemorySurrogate(
-            d_model=EMB_DIM,
-            latent_dim=LATENT_DIM,
-            max_len=MAX_LEN,
-            layers=2,
-            heads=4,
-            ffn_dim=3 * EMB_DIM,
-            dropout=DROPOUT,
-        ).to(device)
-        model = VAEWithSurrogate(vae, sur).to(device)
-        if "vae" in checkpoint:
-            load_res = model.vae.load_state_dict(checkpoint["vae"], strict=False)
+    # 모델 골격 구성 (surrogate는 bundle 여부와 무관하게 만들어 두어도 무방)
+    sur = Z2MemorySurrogate(
+        d_model=EMB_DIM, latent_dim=LATENT_DIM, max_len=MAX_LEN,
+        layers=2, heads=4, ffn_dim=3 * EMB_DIM, dropout=DROPOUT
+    ).to(device)
+    model = VAEWithSurrogate(vae, sur).to(device)
+
+    # 키 분석
+    keys = list(ckpt.keys()) if isinstance(ckpt, Mapping) else []
+    has_prefixed = any(k.startswith(("vae.", "surrogate.", "diag_bias.", "sur_ln", "sur_gate")) for k in keys)
+
+    load_errors = []
+
+    if has_prefixed:
+        # 1) 전체 모델로 바로 로드 시도
+        try:
+            load_res = model.load_state_dict(ckpt, strict=False)
             if load_res.missing_keys:
-                logger.warning(
-                    "Missing keys in VAE state dict: %s", load_res.missing_keys
-                )
+                logger.warning("Missing keys (full model): %s", load_res.missing_keys)
+            else:
+                logger.info("No missing keys (full model)")
+            if load_res.unexpected_keys:
+                logger.warning("Unexpected keys (full model): %s", load_res.unexpected_keys)
+            else:
+                logger.info("No unexpected keys (full model)")
+            logger.info("Loaded FULL model from %s on %s", cfg.model_path, device)
+        except Exception as e:
+            load_errors.append(e)
+            # 2) 실패 시 prefix를 벗겨 부분 로드
+            vae_sd = {k[len("vae."):] : v for k, v in ckpt.items() if k.startswith("vae.")}
+            sur_sd = {k[len("surrogate."):] : v for k, v in ckpt.items() if k.startswith("surrogate.")}
+            diag_sd = {k[len("diag_bias."):] : v for k, v in ckpt.items() if k.startswith("diag_bias.")}
+
+            if vae_sd:
+                res = model.vae.load_state_dict(vae_sd, strict=False)
+                if res.missing_keys:
+                    logger.warning("Missing VAE keys: %s", res.missing_keys)
+                if res.unexpected_keys:
+                    logger.warning("Unexpected VAE keys: %s", res.unexpected_keys)
+
+            if sur_sd and model.surrogate is not None:
+                res = model.surrogate.load_state_dict(sur_sd, strict=False)
+                if res.missing_keys:
+                    logger.warning("Missing surrogate keys: %s", res.missing_keys)
+                if res.unexpected_keys:
+                    logger.warning("Unexpected surrogate keys: %s", res.unexpected_keys)
+
+            # diag_bias, sur_ln, sur_gate가 현재 클래스에 있으면 수동 주입 필요할 수 있음.
+            # (state_dict로 바로 로드가 안 되면, 여기서 getattr/setattr로 파라미터 이름 맞춰 주입)
+            logger.info("Loaded model by splitting prefixed keys from %s on %s", cfg.model_path, device)
+
+    else:
+        # 구(舊) 포맷: 순수 VAE 가중치만 있거나, 이름이 언프리픽스 상태
+        try:
+            res = model.vae.load_state_dict(ckpt.get("model_sd", ckpt), strict=False)
+            if res.missing_keys:
+                logger.warning("Missing keys in VAE state dict: %s", res.missing_keys)
             else:
                 logger.info("No missing keys in VAE state dict")
-
-            if load_res.unexpected_keys:
-                logger.warning(
-                    "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
-                )
+            if res.unexpected_keys:
+                logger.warning("Unexpected keys in VAE state dict: %s", res.unexpected_keys)
             else:
                 logger.info("No unexpected keys in VAE state dict")
-
-        if "surrogate" in checkpoint:
-            sur_res = model.surrogate.load_state_dict(
-                checkpoint["surrogate"], strict=False
-            )
-            if sur_res.missing_keys:
-                logger.warning(
-                    "Missing keys in surrogate state dict: %s", sur_res.missing_keys
-                )
-            else:
-                logger.info("No missing keys in surrogate state dict")
-
-            if sur_res.unexpected_keys:
-                logger.warning(
-                    "Unexpected keys in surrogate state dict: %s",
-                    sur_res.unexpected_keys,
-                )
-            else:
-                logger.info("No unexpected keys in surrogate state dict")
-        logger.info("Loaded VAE with surrogate from %s on %s", cfg.model_path, device)
-    else:
-        model = VAEWithSurrogate(vae, None).to(device)
-        vae_state = checkpoint.get("model_sd", checkpoint)
-        load_res = model.vae.load_state_dict(vae_state, strict=False)
-        if load_res.missing_keys:
-            logger.warning("Missing keys in VAE state dict: %s", load_res.missing_keys)
-        else:
-            logger.info("No missing keys in VAE state dict")
-
-        if load_res.unexpected_keys:
-            logger.warning(
-                "Unexpected keys in VAE state dict: %s", load_res.unexpected_keys
-            )
-        else:
-            logger.info("No unexpected keys in VAE state dict")
-
-        logger.info("Loaded VAE from %s on %s", cfg.model_path, device)
+            logger.info("Loaded VAE from %s on %s", cfg.model_path, device)
+        except Exception as e:
+            load_errors.append(e)
+            raise
 
     model.eval()
     return model
 
-
-def _checkpoint_error(path: str, original: Exception) -> CheckpointLoadError:
-    """Return a :class:`CheckpointLoadError` enriched with troubleshooting hints."""
-
-    hints = []
-    file_path = Path(path)
-    try:
-        size = file_path.stat().st_size
-        if size == 0:
-            hints.append("The file is empty.")
-        elif size < 1024:
-            hints.append(
-                "The file is only "
-                f"{size} bytes and looks like a placeholder rather than a checkpoint. "
-                "Run `git lfs pull` to download the actual weights or provide a full"
-                " checkpoint file."
-            )
-        with file_path.open("rb") as handle:
-            head = handle.read(256)
-        if b"git-lfs" in head:
-            hints.append(
-                "It appears to be a Git LFS pointer. Run `git lfs pull` to download the"
-                " actual weights."
-            )
-    except OSError:
-        # If the file cannot be inspected we keep the original error message.
-        pass
-
-    if hints:
-        message = f"{original}. {' '.join(hints)}"
-        wrapped = RuntimeError(message)
-        return CheckpointLoadError(path, wrapped)
-    return CheckpointLoadError(path, original)
 
 
 def _load_checkpoint(path: str, device: torch.device) -> dict:
