@@ -336,3 +336,50 @@ class VAEWithSurrogate(nn.Module):
         else:
             logits[:, int(self.pad_token)] = -float("inf")
         return logits
+
+    # -------------------------
+    # 기본 forward (교사강요 VAE 경로)
+    # -------------------------
+    def forward(
+        self, x: torch.Tensor, mask: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Run the underlying VAE and cache the sampled latent for decoding."""
+
+        if mask.dtype != torch.bool:
+            mask = mask.to(torch.bool)
+
+        h_enc, enc_mask = self.encoder(x)
+        denom = enc_mask.sum(1, keepdim=True).clamp_min(1)
+        pooled = (h_enc * enc_mask.unsqueeze(-1)).sum(1) / denom
+
+        mu = self.vae.to_mu(pooled)
+        logvar = self.vae.to_logvar(pooled)
+        std = torch.exp(0.5 * logvar)
+        z = mu + torch.randn_like(mu) * std
+        self._z_cached = z.detach()
+
+        B, L = x.size()
+        device = x.device
+        dec_in = torch.full((B, L), int(self.bos_token), device=device, dtype=torch.long)
+        dec_in[:, 1:] = x[:, :-1]
+
+        emb = self.dec_emb(dec_in) + self.dec_pos[:, :L, :]
+        z_emb = self.latent2emb(z).unsqueeze(1).expand(-1, L, -1)
+        emb = emb + z_emb
+
+        tgt_mask = torch.triu(torch.full((L, L), float("-inf"), device=device), diagonal=1)
+        memory_mask = None
+        if self.diag_bias is not None:
+            memory_mask = self.diag_bias(L, h_enc.size(1), device=device)
+
+        h_dec = self.decoder(
+            tgt=emb,
+            memory=h_enc,
+            tgt_mask=tgt_mask,
+            tgt_key_padding_mask=~mask,
+            memory_key_padding_mask=~enc_mask,
+            memory_mask=memory_mask,
+        )
+
+        logits = self.out(h_dec)
+        return logits, mu, logvar, h_enc, enc_mask
