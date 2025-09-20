@@ -52,6 +52,7 @@ def load_vae(
     ).to(device)
 
     checkpoint = _load_checkpoint(cfg.model_path, device)
+    checkpoint=checkpoint['model_state']
 
     if "bundle_version" in checkpoint:
         sur = Z2MemorySurrogate(
