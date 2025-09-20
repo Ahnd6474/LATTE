@@ -47,9 +47,9 @@
 
 **Phase‑1 (teacher‑forced)** optimizes a structure‑aware ELBO variant:
 
-\[
-L_1 \;=\; \lambda\,(L_{\text{COS}} + L_{\text{MSE}}) \;+\; \alpha\,L_{\text{CE}} \;+\; \beta\,L_{\text{KL}} \,,
-\]
+$$
+L_1 \;=\; \lambda\,(L_{\mathrm{COS}} + L_{\mathrm{MSE}}) \;+\; \alpha\,L_{\mathrm{CE}} \;+\; \beta\,L_{\mathrm{KL}} \,.
+$$
 
 where **λ = 5**, **α** is linearly decayed **30 → 0.1** and **β** is warmed **0 → 0.1** over the first **100 epochs**. The cosine term tolerates plausible substitutions while MSE penalizes larger deviations, keeping latents informative (target **KL ≈ 0.05**).
 
