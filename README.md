@@ -55,9 +55,9 @@ This repository also provides **latent embeddings for a 1M random subset of UniR
 
 We optimize a structure‑aware ELBO variant under teacher forcing:
 
-\[
-\mathcal{L}_1 = \lambda (L_{\mathrm{COS}} + L_{\mathrm{MSE}}) + \alpha L_{\mathrm{CE}} + \beta L_{\mathrm{KL}},
-\]
+$$
+L_1 = \lambda\ (L_{\mathrm{COS}} + L_{\mathrm{MSE}}) + \alpha\ L_{\mathrm{CE}} + \beta L_{\mathrm{KL}} .
+$$
 
 with **λ = 5**; **α** decays **30 → 0.1** and **β** warms **0 → 0.1** over the first **100 epochs**. The cosine term tolerates plausible substitutions; MSE penalizes larger embedding deviations. Together they keep latents informative and discourage collapse. A small **Transformer surrogate** learns to predict decoder memory from *z* for free‑run generation without encoder memory.
 
