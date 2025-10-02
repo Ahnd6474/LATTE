@@ -123,7 +123,6 @@ print(new_seq)
 | Task               | Dataset                 | Metric                 | LATTE (this work) | Notes                                  |
 |--------------------|-------------------------|------------------------|-------------------|----------------------------------------|
 | Reconstruction     | UniRef50 (held‑out)     | % accurate             | **97.17**         | Epoch 380 checkpoint                   |
-| Mutational effect  | ProteinGym              | Spearman ρ (≤512 / all)| **0.7779 / 0.689**| 3‑layer MLP on latents                 |
 | FP vs non‑FP       | FPbase                  | 5‑fold Accuracy        | **0.987**         | GP classifier                          |
 | λ_abs              | FPbase                  | RMSE (nm)              | **2.70**          | GP regressor                           |
 | λ_em               | FPbase                  | RMSE (nm)              | **3.80**          | GP regressor                           |
