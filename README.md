@@ -2,7 +2,7 @@
 **L**atent-conditioned **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure‑informed protein VAE** with a latent‑conditioned decoder.
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/Paper-LATTE%20(Bioinformatics%2C%20preprint)-green.svg?style=flat-square" alt="paper"></a>
+  <a href="https://github.com/Ahnd6474/LATTE/blob/main/docs/LATTE.pdf"><img src="https://img.shields.io/badge/Paper-LATTE%20(Bioinformatics%2C%20preprint)-green.svg?style=flat-square" alt="paper"></a>
   <a href="https://github.com/Ahnd6474/LATTE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/LATTE?style=flat-square" alt="license"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
