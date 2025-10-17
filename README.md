@@ -65,7 +65,7 @@ L_1 = \lambda(L_\text{COS}+L_\text{MSE}) + \alpha L_\text{CE} + \beta L_\text{KL
 - **Decoder:** 4× Transformer (teacher-forced during training)  
 - **Surrogate:** lightweight transformer that maps latent **z** → decoder memory for free-run generation  
 - **Total params:** ~**5.5 M**  
-<img src= "https://github.com/Ahnd6474/LATTE/blob/main/img/figure1.jpg">
+<img src= "https://github.com/Ahnd6474/LATTE/blob/main/img/figure1.jpg"></img>
 ---
 
 ## Dataset & Provided Latents
