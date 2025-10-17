@@ -164,18 +164,19 @@ If you use LATTE, please cite the manuscript:
 
 ```bibtex
 @article{ahn2025latte,
-  title   = {LATTE: A Structure-Informed Latent Model for Protein Sequence Embedding},
-  author  = {Ahn, Danny and Lee, Minjae and Moon, Sihyeon and Jung, Jooyoung},
-  journal = {Bioinformatics},
-  year    = {2025},
-  note    = {Manuscript; see repo for latest PDF}
+  author    = {Danny Ahn},
+  title     = {{LATTE}: A Structure-Informed Latent Model for Protein Sequence Embedding},
+  journal   = {Bioinformatics},
+  year      = {2025},
+  url       = {https://github.com/Ahnd6474/LATTE},
+  note      = {In press; preprint available at https://github.com/Ahnd6474/LATTE}
 }
 ```
 
 ---
 
 ## License
-Code and models are released under **BSL-1.1**; third-party components retain their original licenses.
+Code and models are released under **MIT**; third-party components retain their original licenses.
 
 ---
 
