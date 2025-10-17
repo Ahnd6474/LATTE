@@ -1,87 +1,81 @@
 # LATTE
-**L**atent-conditioned **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure‑informed protein VAE** with a latent‑conditioned decoder.
+**L**atent-aware **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure-informed protein VAE** with a latent-conditioned decoder.
+
+> **TL;DR.** LATTE learns a **structure-aligned** 256-d latent space by matching reconstruction embeddings to ESMS/ESM-2 with a **cosine + MSE** perceptual loss, while keeping the KL **active near 0.05** to prevent collapse. It achieves **97.17%** reconstruction on UniRef50 (held-out), yields **0.987** (5-fold) FP vs non-FP accuracy and **2.70/3.80 nm** RMSE for λ_abs/λ_em with simple GP models, and provides a broader, heavier-tailed geometry than ESM-2 that improves **latent prefilter recall** for **Deep BLAST**.
 
 <p align="center">
-  <a href="https://github.com/Ahnd6474/LATTE/blob/main/docs/LATTE.pdf"><img src="https://img.shields.io/badge/Paper-LATTE%20(Bioinformatics%2C%20preprint)-green.svg?style=flat-square" alt="paper"></a>
-  <a href="https://github.com/Ahnd6474/LATTE/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/LATTE?style=flat-square" alt="license"></a>
-  <a href="#"><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
-  <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
+  <a href="docs/LATTE.pdf"><img src="https://img.shields.io/badge/Paper-LATTE%20(manuscript)-green.svg?style=flat-square" alt="paper"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/LATTE?style=flat-square" alt="license"></a>
+  <a><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
+  <a><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square"></a>
 </p>
-
-> **LATTE** is a **structure‑aware protein VAE** that aligns reconstructions to pretrained **ESMS/ESM‑2 embeddings** via a perceptual loss (**COS + MSE**). This keeps the latent space **active (target KL ≈ 0.05)** and informative for downstream tasks. LATTE reaches **97.17%** reconstruction on UniRef50 and supports **Deep BLAST**: latent‑space retrieval followed by classical alignment.
 
 ---
 
 ## Table of Contents
-
 1. [Project Overview](#project-overview)  
 2. [Highlights](#highlights)  
 3. [Method](#method)  
 4. [Architecture](#architecture)  
-5. [Dataset & Latent Embeddings](#dataset--latent-embeddings)  
+5. [Dataset & Provided Latents](#dataset--provided-latents)  
 6. [Installation](#installation)  
 7. [Quick Start](#quick-start)  
 8. [Benchmarks & Results](#benchmarks--results)  
-9. [Reproducing Paper Results](#reproducing-paper-results)  
-10. [Deep BLAST (Latent→Alignment)](#deep-blast-latentalignment)  
-11. [Known Limitations](#known-limitations)  
-12. [Citation](#citation)  
-13. [License](#license)  
-14. [Contact](#contact)
+9. [Embedding Geometry vs ESM-2](#embedding-geometry-vs-esm-2)  
+10. [Deep BLAST (Latent → Alignment)](#deep-blast-latent--alignment)  
+11. [Reproducing Paper Results](#reproducing-paper-results)  
+12. [Known Limitations](#known-limitations)  
+13. [Citation](#citation)  
+14. [License](#license)  
+15. [Contact](#contact)
 
 ---
 
 ## Project Overview
+LATTE is a compact (~**5.5 M** params) transformer VAE for protein sequences. Reconstructions are aligned to pretrained ESMS/ESM-2 embeddings using a **perceptual loss** (COS + MSE) in addition to CE and KL. This keeps the latent **informative** and avoids posterior collapse; the selected checkpoint (**epoch 380**) balances **Val CE = 0.072** and **KL ≈ 0.048**.
 
-LATTE is a compact transformer VAE for protein sequences. It learns a **structure‑aligned latent space** by matching reconstruction embeddings to **ESMS/ESM‑2** through a **cosine + MSE perceptual loss**, while keeping an **active KL** to prevent posterior collapse. The latent is then used to condition an autoregressive decoder (teacher‑forced during training; surrogate‑assisted for free run).
-
-This repository also provides **latent embeddings for a 1M random subset of UniRef50**, produced by the LATTE encoder. These latents enable **fast nearest‑neighbor queries** and serve as the prefilter for **Deep BLAST** (retrieve by cosine in latent space → run BLAST only on the shortlist).
+This repo also includes **1M LATTE encoder latents** for a random UniRef50 subset to enable fast kNN/ANN lookup and to serve as a **prefilter** for **Deep BLAST**.
 
 ---
 
 ## Highlights
-
-- **Structure‑aware training** — token‑wise **cosine + MSE** alignment to ESMS/ESM‑2 embeddings (perceptual loss).  
-- **Active latent space** — KL kept near **0.05**, avoiding collapse while remaining informative.  
-- **Compact** — ~**5.5M** parameters (4‑layer encoder, 4‑layer decoder; *d*=256, 4 heads, FFN=512).  
-- **Reconstruction** — **97.17%** on held‑out UniRef50.  
-- **Downstream FP tasks** — FP vs non‑FP **0.987** (5‑fold); **2.70/3.80 nm** RMSE for λ_abs/λ_em with GP regressors.  
-- **Embedding geometry** — broader, heavier‑tailed pairwise distances than ESM‑2; preserves neighbor ranking (high ρ), improving **latent prefilter recall**.  
-- **Deep BLAST** — kNN in 256‑d latent space reduces fan‑out by orders of magnitude, then classic BLAST restores alignment‑level interpretability.
+- **Structure-aware training.** Perceptual loss aligns reconstructions to ESMS/ESM-2 (**COS + MSE**) with schedule  
+  \(L_1 = \lambda(L_\text{COS}+L_\text{MSE}) + \alpha L_\text{CE} + \beta L_\text{KL}\),  
+  **λ = 5**, **α** decays **30 → 0.1**, **β** warms **0 → 0.1** (first **100 epochs**).  
+- **Active latent space.** Mean KL/dim ≈ **0.04998** (RMSE **0.07027**); avoids collapse seen in the ablation without structural loss.  
+- **Compact.** ~**5.5 M** params (4-layer encoder/decoder, d=256, 4 heads, FFN=512, dropout=0.3).  
+- **Reconstruction.** **97.17%** on held-out UniRef50 (epoch 380).  
+- **Downstream FP tasks.** 5-fold accuracy **0.987** (FP vs non-FP); λ_abs / λ_em RMSE **2.70 / 3.80 nm** with simple Gaussian processes.  
+- **Geometry.** Matched-subset pairwise cosine distances are **broader/heavier-tailed** vs ESM-2 (LATTE mean **0.1694**, SD **0.3428**; ESM-2 mean **0.0381**, SD **0.0822**), with high rank concordance (Spearman **ρ = 0.761**).  
+- **Deep BLAST.** Latent kNN prefilter (256-d, cosine) → BLAST only on shortlist; reduces fan-out by **10–100×** while preserving alignment-level interpretability.
 
 ---
 
 ## Method
-
-We optimize a structure‑aware ELBO variant under teacher forcing:
-
-$$
-L_1 = \lambda\ (L_{\mathrm{COS}} + L_{\mathrm{MSE}}) + \alpha\ L_{\mathrm{CE}} + \beta L_{\mathrm{KL}} .
-$$
-
-with **λ = 5**; **α** decays **30 → 0.1** and **β** warms **0 → 0.1** over the first **100 epochs**. The cosine term tolerates plausible substitutions; MSE penalizes larger embedding deviations. Together they keep latents informative and discourage collapse. A small **Transformer surrogate** learns to predict decoder memory from *z* for free‑run generation without encoder memory.
+We train under teacher forcing with:
+\[
+L_1 = \lambda(L_\text{COS}+L_\text{MSE}) + \alpha L_\text{CE} + \beta L_\text{KL},
+\]
+**λ = 5**, **α: 30→0.1**, **β: 0→0.1** over **100 epochs**. The cosine term tolerates plausible substitutions in embedding space; MSE penalizes larger deviations. This prevents KL collapse and keeps latents predictive.
 
 ---
 
 ## Architecture
-
-- Encoder: 4× Transformer layers (d_model=256, heads=4, FFN=512, Dropout=0.3)  
-- Decoder: 4× Transformer layers (teacher‑forced training)  
-- Surrogate: 2× layers, 4 heads (predicts decoder memory from latent *z*)  
-- Total params ≈ **5.5M**
+- **Encoder:** 4× Transformer (d_model=256, heads=4, FFN=512, dropout=0.3)  
+- **Decoder:** 4× Transformer (teacher-forced during training)  
+- **Surrogate:** lightweight transformer that maps latent **z** → decoder memory for free-run generation  
+- **Total params:** ~**5.5 M**  
+(See Fig. 1 and Table 1 in the paper for a schematic and hyperparameters.)
 
 ---
 
-## Dataset & Latent Embeddings
-
-- **Training:** random subsample of **UniRef50**. The selected checkpoint (**epoch 380**) balances **active KL ≈ 0.048** and low CE.  
-- **Provided latents:** **1,000,000** sequences randomly sampled from **UniRef50**, encoded by the **LATTE encoder**. Each item includes: sequence ID, sequence length, 256‑d latent vector (and optional metadata).  
-- **Intended use:** FAISS/ANN indexing for fast retrieval; **Deep BLAST** prefilter; downstream clustering, tagging, and property modeling.
+## Dataset & Provided Latents
+- **Training:** random UniRef50 subsample; **epoch 380** chosen (KL near active threshold, lowest Val CE).  
+- **Provided latents:** **1,000,000** UniRef50 sequences encoded by LATTE (256-d vectors + metadata) for FAISS/ANN retrieval and downstream analytics.
 
 ---
 
 ## Installation
-
 ```bash
 # 1) Clone
 git clone https://github.com/Ahnd6474/LATTE.git
@@ -101,87 +95,89 @@ git lfs install && git lfs pull
 ---
 
 ## Quick Start
-
 ```python
 from latte import Tokenizer, Config, load_vae, encode, decode
 
-cfg = Config(model_path="models/latte_epoch380.pt")
+cfg = Config(model_path="models/latte_epoch380.pt", max_len=512)
 tok = Tokenizer.from_esm()
 model = load_vae(cfg, len(tok.vocab), tok.pad_idx, tok.bos_idx)
 
 seq = "MKTFFVLLLACTIVCLLA"
 z = encode(model, seq, tok, cfg.max_len)
-# Teacher-forced or surrogate-assisted decoding
-new_seq = decode(model, z, tok, cfg.max_len)
+new_seq = decode(model, z, tok, cfg.max_len)  # surrogate-assisted free run
 print(new_seq)
 ```
 
 ---
 
 ## Benchmarks & Results
+| Task                     | Dataset       | Metric             | LATTE (this work) |
+|--------------------------|---------------|--------------------|-------------------|
+| Reconstruction           | UniRef50      | % accurate         | **97.17**         |
+| FP vs non-FP (5-fold)    | FPbase        | Accuracy           | **0.987**         |
+| λ_abs                    | FPbase        | RMSE (nm)          | **2.70**          |
+| λ_em                     | FPbase        | RMSE (nm)          | **3.80**          |
 
-| Task               | Dataset                 | Metric                 | LATTE (this work) | Notes                                  |
-|--------------------|-------------------------|------------------------|-------------------|----------------------------------------|
-| Reconstruction     | UniRef50 (held‑out)     | % accurate             | **97.17**         | Epoch 380 checkpoint                   |
-| FP vs non‑FP       | FPbase                  | 5‑fold Accuracy        | **0.987**         | GP classifier                          |
-| λ_abs              | FPbase                  | RMSE (nm)              | **2.70**          | GP regressor                           |
-| λ_em               | FPbase                  | RMSE (nm)              | **3.80**          | GP regressor                           |
+t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the latent manifold; k-means over FP embeddings yields 3 clusters from which decoded consensus sequences remain highly FP-like per the trained GP classifier. See Tables 3–5 and Supplementary Figures in the paper.
 
-**Embedding geometry.** Pairwise cosine distances over matched subsets are **broader/heavier‑tailed** in LATTE than ESM‑2; direct LATTE↔ESM comparisons show strong rank concordance, so latent kNN preserves neighbor ordering while expanding dynamic range—useful for **latent prefiltering** before alignment.
+---
+
+## Embedding Geometry vs ESM-2
+- **Pairwise distances (matched subset):** LATTE mean **0.1694**, SD **0.3428**, p50 **0.0141**, p90 **0.9006** vs ESM-2 mean **0.0381**, SD **0.0822**, p50 **0.00953**, p90 **0.1133**.  
+- **Direct comparison:** OLS **slope = 0.125**, **intercept = 0.017**, **Spearman ρ = 0.761** → preserved neighbor ordering but expanded dynamic range (useful for recall in prefiltering).  
+- **Clustering:** k=3 cosine-silhouette **0.9431** (LATTE) vs **0.9022** (ESM-2); cross-partition agreement shows strong consistency (e.g., AMI/ARI/FMI as in Table 8).
+
+---
+
+## Deep BLAST (Latent → Alignment)
+1. **Retrieve** top-K neighbors by **cosine** in 256-d LATTE latent space (FAISS/ANN).  
+2. **Align** only that shortlist with **BLAST** for alignment-level interpretability.  
+3. **Tune** K (or radius) for recall/cost; **fallback** to global BLAST when latent similarity is low.
+
+This shifts BLAST from broad discovery to **precise refinement**, often cutting search fan-out by **10–100×** while enriching biologically coherent hits.
 
 ---
 
 ## Reproducing Paper Results
-
 ```bash
-# Train on a UniRef50 subsample
-python train_latte.py --data data/uniref50_subsample.fasta                       --epochs 380                       --save models/latte_epoch380.pt
+# Train LATTE on a UniRef50 subsample
+python train_latte.py   --data data/uniref50_subsample.fasta   --epochs 380   --save models/latte_epoch380.pt
 
-# ProteinGym evaluation (mutational effects)
-python protein_gym_evaluate.py --weights models/latte_epoch380.pt
+# GFP pipelines (classification + spectral regression)
+python fp_pipeline.py   --weights models/latte_epoch380.pt   --fp_csv data/fpbase_curated.csv
+
+# Geometry: ESM-2 vs LATTE comparison
+python geometry_compare.py   --esm_cache data/esm2_embeddings.npy   --latte_cache data/latte_latents.npy
 ```
-
----
-
-## Deep BLAST (Latent→Alignment)
-
-1. **Retrieve** top‑K neighbors by **cosine** in 256‑d LATTE latent space (FAISS/ANN).  
-2. **Align** only this shortlist with classical **BLAST** to recover alignment‑level interpretability.  
-3. **Tune** K (or radius) to trade recall vs. cost; fall back to global BLAST if latent similarity is too low.  
-
-This pipeline reduces fan‑out by **10–100×** while enriching for structurally/functional coherent hits, improving top‑rank precision without sacrificing interpretability.
+(See the manuscript for exact settings and supplementary figures.)
 
 ---
 
 ## Known Limitations
-
-- Free‑run decoding can drift on very long sequences; the surrogate mitigates but does not eliminate this.  
-- Extremely remote homology still benefits from larger PLMs or MSA‑based features; use the latent prefilter as a **recall‑boosting front‑end**, not a replacement for alignment.
+- Very long free-run decoding can drift; the surrogate reduces but does not eliminate this.  
+- Extremely remote homology can still benefit from larger PLMs/MSA-based features; use LATTE as a **recall-boosting front-end**, not a wholesale replacement for alignment.
 
 ---
 
 ## Citation
-
-If you use LATTE, please cite:
+If you use LATTE, please cite the manuscript:
 
 ```bibtex
 @article{ahn2025latte,
-  title={LATTE: A Structure-Informed Latent Model for Protein Sequence Embedding},
-  author={Ahn, Danny and Lee, Minjae and Moon, Sihyeon and Jung, Jooyoung},
-  journal={Bioinformatics},
-  year={2025},
-  doi={10.1093/bioinformatics/btzXXX}
+  title   = {LATTE: A Structure-Informed Latent Model for Protein Sequence Embedding},
+  author  = {Ahn, Danny and Lee, Minjae and Moon, Sihyeon and Jung, Jooyoung},
+  journal = {Bioinformatics},
+  year    = {2025},
+  note    = {Manuscript; see repo for latest PDF}
 }
 ```
 
 ---
 
 ## License
-
-Code and models are released under the **Business Source License 1.1 (BSL‑1.1)**. Third‑party components retain their respective licenses.
+Code and models are released under **BSL-1.1**; third-party components retain their original licenses.
 
 ---
 
 ## Contact
-
 Danny Ahn — <ahnd6474@gmail.com>
