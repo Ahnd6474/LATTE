@@ -1,7 +1,7 @@
 # LATTE
 **L**atent-aware **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure-informed protein VAE** with a latent-conditioned decoder.
 
-> **TL;DR.** LATTE learns a **structure-aligned** 256-d latent space by matching reconstruction embeddings to ESMS/ESM-2 with a **cosine + MSE** perceptual loss, while keeping the KL **active near 0.05** to prevent collapse. It achieves **97.17%** reconstruction on UniRef50 (held-out), yields **0.987** (5-fold) FP vs non-FP accuracy and **2.70/3.80 nm** RMSE for λ_abs/λ_em with simple GP models, and provides a broader, heavier-tailed geometry than ESM-2 that improves **latent prefilter recall** for **Deep BLAST**.
+> LATTE learns a **structure-aligned** 256-d latent space by matching reconstruction embeddings to ESMS/ESM-2 with a **cosine + MSE** perceptual loss, while keeping the KL **active near 0.05** to prevent collapse. It achieves **97.17%** reconstruction on UniRef50 (held-out), yields **0.987** (5-fold) FP vs non-FP accuracy and **2.70/3.80 nm** RMSE for λ_abs/λ_em with simple GP models, and provides a broader, heavier-tailed geometry than ESM-2 that improves **latent prefilter recall** for **Deep BLAST**.
 
 <p align="center">
   <a href="docs/LATTE.pdf"><img src="https://img.shields.io/badge/Paper-LATTE%20(manuscript)-green.svg?style=flat-square" alt="paper"></a>
