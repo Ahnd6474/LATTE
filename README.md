@@ -130,8 +130,8 @@ t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the 
 
 
 ## Deep BLAST (Latent → Alignment)
-<img src="https://github.com/Ahnd6474/LATTE/blob/main/img/dendrogram.png" width="400">
 <img src="https://github.com/Ahnd6474/LATTE/blob/main/img/elbow_adaptive_full_870k.png?raw=true" width="400">
+<img src="https://github.com/Ahnd6474/LATTE/blob/main/img/dendrogram.png" width="1000">
 
 1. **Retrieve** top-K neighbors by **cosine** in 256-d LATTE latent space (FAISS/ANN).  
 2. **Align** only that shortlist with **BLAST** for alignment-level interpretability.  
