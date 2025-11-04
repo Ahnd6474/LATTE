@@ -20,10 +20,10 @@
 5. [Dataset & Provided Latents](#dataset--provided-latents)  
 6. [Installation](#installation)  
 7. [Quick Start](#quick-start)
-8. [Latent Tree Query API](#latent-tree-query-api)
-9. [Benchmarks & Results](#benchmarks--results)
-10. [Embedding Geometry vs ESM-2](#embedding-geometry-vs-esm-2)
-11. [Deep BLAST (Latent → Alignment)](#deep-blast-latent--alignment)
+8. [Benchmarks & Results](#benchmarks--results)
+9. [Embedding Geometry vs ESM-2](#embedding-geometry-vs-esm-2)
+10. [Deep BLAST (Latent → Alignment)](#deep-blast-latent--alignment)
+11. [Latent Tree Query API](#latent-tree-query-api)
 12. [Reproducing Paper Results](#reproducing-paper-results)
 13. [Known Limitations](#known-limitations)
 14. [Citation](#citation)
@@ -108,8 +108,34 @@ new_seq = decode(model, z, tok, cfg.max_len)  # surrogate-assisted free run
 print(new_seq)
 ```
 
+
+## Benchmarks & Results
+| Task                     | Dataset       | Metric             | LATTE (this work) |
+|--------------------------|---------------|--------------------|-------------------|
+| Reconstruction           | UniRef50      | % accurate         | **97.17**         |
+| FP vs non-FP (5-fold)    | FPbase        | Accuracy           | **0.987**         |
+| λ_abs                    | FPbase        | RMSE (nm)          | **2.70**          |
+| λ_em                     | FPbase        | RMSE (nm)          | **3.80**          |
+
+t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the latent manifold; k-means over FP embeddings yields 3 clusters from which decoded consensus sequences remain highly FP-like per the trained GP classifier. See Tables 3–5 and Supplementary Figures in the paper.
+
 ---
 
+## Embedding Geometry vs ESM-2
+- **Pairwise distances (matched subset):** LATTE mean **0.1694**, SD **0.3428**, p50 **0.0141**, p90 **0.9006** vs ESM-2 mean **0.0381**, SD **0.0822**, p50 **0.00953**, p90 **0.1133**.  
+- **Direct comparison:** OLS **slope = 0.125**, **intercept = 0.017**, **Spearman ρ = 0.761** → preserved neighbor ordering but expanded dynamic range (useful for recall in prefiltering).  
+- **Clustering:** k=3 cosine-silhouette **0.9431** (LATTE) vs **0.9022** (ESM-2); cross-partition agreement shows strong consistency (e.g., AMI/ARI/FMI as in Table 8).
+
+---
+
+## Deep BLAST (Latent → Alignment)
+1. **Retrieve** top-K neighbors by **cosine** in 256-d LATTE latent space (FAISS/ANN).  
+2. **Align** only that shortlist with **BLAST** for alignment-level interpretability.  
+3. **Tune** K (or radius) for recall/cost; **fallback** to global BLAST when latent similarity is low.
+
+This shifts BLAST from broad discovery to **precise refinement**, often cutting search fan-out by **10–100×** while enriching biologically coherent hits.
+
+---
 ## Latent Tree Query API
 
 We now ship the centroid tree index that was previously available only in
@@ -156,34 +182,6 @@ for h in hits:
 
 The same API works for batches by encoding sequences yourself and passing the
 latent vectors to `LatentTreeIndex.query_latent`.
-
----
-
-## Benchmarks & Results
-| Task                     | Dataset       | Metric             | LATTE (this work) |
-|--------------------------|---------------|--------------------|-------------------|
-| Reconstruction           | UniRef50      | % accurate         | **97.17**         |
-| FP vs non-FP (5-fold)    | FPbase        | Accuracy           | **0.987**         |
-| λ_abs                    | FPbase        | RMSE (nm)          | **2.70**          |
-| λ_em                     | FPbase        | RMSE (nm)          | **3.80**          |
-
-t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the latent manifold; k-means over FP embeddings yields 3 clusters from which decoded consensus sequences remain highly FP-like per the trained GP classifier. See Tables 3–5 and Supplementary Figures in the paper.
-
----
-
-## Embedding Geometry vs ESM-2
-- **Pairwise distances (matched subset):** LATTE mean **0.1694**, SD **0.3428**, p50 **0.0141**, p90 **0.9006** vs ESM-2 mean **0.0381**, SD **0.0822**, p50 **0.00953**, p90 **0.1133**.  
-- **Direct comparison:** OLS **slope = 0.125**, **intercept = 0.017**, **Spearman ρ = 0.761** → preserved neighbor ordering but expanded dynamic range (useful for recall in prefiltering).  
-- **Clustering:** k=3 cosine-silhouette **0.9431** (LATTE) vs **0.9022** (ESM-2); cross-partition agreement shows strong consistency (e.g., AMI/ARI/FMI as in Table 8).
-
----
-
-## Deep BLAST (Latent → Alignment)
-1. **Retrieve** top-K neighbors by **cosine** in 256-d LATTE latent space (FAISS/ANN).  
-2. **Align** only that shortlist with **BLAST** for alignment-level interpretability.  
-3. **Tune** K (or radius) for recall/cost; **fallback** to global BLAST when latent similarity is low.
-
-This shifts BLAST from broad discovery to **precise refinement**, often cutting search fan-out by **10–100×** while enriching biologically coherent hits.
 
 ---
 
