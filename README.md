@@ -122,6 +122,7 @@ t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the 
 ---
 
 ## Embedding Geometry vs ESM-2
+<img src= "https://github.com/Ahnd6474/LATTE/blob/main/img/figure4.png">
 - **Pairwise distances (matched subset):** LATTE mean **0.1694**, SD **0.3428**, p50 **0.0141**, p90 **0.9006** vs ESM-2 mean **0.0381**, SD **0.0822**, p50 **0.00953**, p90 **0.1133**.  
 - **Direct comparison:** OLS **slope = 0.125**, **intercept = 0.017**, **Spearman ρ = 0.761** → preserved neighbor ordering but expanded dynamic range (useful for recall in prefiltering).  
 - **Clustering:** k=3 cosine-silhouette **0.9431** (LATTE) vs **0.9022** (ESM-2); cross-partition agreement shows strong consistency (e.g., AMI/ARI/FMI as in Table 8).
