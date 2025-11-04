@@ -1,0 +1,12 @@
+{
+  "k": 438,
+  "N": 873074,
+  "D": 256,
+  "distance": "cosine (L2-normalized dot)",
+  "algorithm": "cosine k-means; X row-normalized; centroids unit-norm",
+  "seed": 42,
+  "n_init": 3,
+  "max_iter_full": 30,
+  "cost_metric": "mean(1 - cos(x, centroid[label]))",
+  "created_at": "2025-11-04T03:22:49Z"
+}
