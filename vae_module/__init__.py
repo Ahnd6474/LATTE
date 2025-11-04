@@ -7,6 +7,7 @@ from .decoder import decode, decode_batch
 from .model import VAEWithSurrogate, Z2MemorySurrogate
 from .classes import SequenceDataset, Tokenizer
 from .utils import sequence_to_tensor, tensor_to_sequence, pad_collate
+from .query import LatentTreeIndex, TreeQueryResult
 from .logger import setup_logger
 from .exceptions import (
     VAEError,
@@ -29,6 +30,8 @@ __all__ = [
     "Z2MemorySurrogate",
     "SequenceDataset",
     "Tokenizer",
+    "LatentTreeIndex",
+    "TreeQueryResult",
     "sequence_to_tensor",
     "tensor_to_sequence",
     "pad_collate",

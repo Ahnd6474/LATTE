@@ -19,15 +19,16 @@
 4. [Architecture](#architecture)  
 5. [Dataset & Provided Latents](#dataset--provided-latents)  
 6. [Installation](#installation)  
-7. [Quick Start](#quick-start)  
-8. [Benchmarks & Results](#benchmarks--results)  
-9. [Embedding Geometry vs ESM-2](#embedding-geometry-vs-esm-2)  
-10. [Deep BLAST (Latent → Alignment)](#deep-blast-latent--alignment)  
-11. [Reproducing Paper Results](#reproducing-paper-results)  
-12. [Known Limitations](#known-limitations)  
-13. [Citation](#citation)  
-14. [License](#license)  
-15. [Contact](#contact)
+7. [Quick Start](#quick-start)
+8. [Latent Tree Query API](#latent-tree-query-api)
+9. [Benchmarks & Results](#benchmarks--results)
+10. [Embedding Geometry vs ESM-2](#embedding-geometry-vs-esm-2)
+11. [Deep BLAST (Latent → Alignment)](#deep-blast-latent--alignment)
+12. [Reproducing Paper Results](#reproducing-paper-results)
+13. [Known Limitations](#known-limitations)
+14. [Citation](#citation)
+15. [License](#license)
+16. [Contact](#contact)
 
 ---
 
@@ -106,6 +107,55 @@ z = encode(model, seq, tok, cfg.max_len)
 new_seq = decode(model, z, tok, cfg.max_len)  # surrogate-assisted free run
 print(new_seq)
 ```
+
+---
+
+## Latent Tree Query API
+
+We now ship the centroid tree index that was previously available only in
+`notebooks/vec-treeing.ipynb`. The new `LatentTreeIndex` helper performs cosine
+filtering over the hierarchical clustering to shortlist promising clusters (and
+optionally return the underlying sequences) without scanning the entire 1M
+latent catalogue.
+
+```python
+from latte import Config, Tokenizer, load_vae, LatentTreeIndex
+
+cfg = Config(model_path="models/latte_epoch380.pt", max_len=512)
+tok = Tokenizer.from_esm()
+model = load_vae(cfg, len(tok.vocab), tok.pad_idx, tok.bos_idx)
+
+# Load the tree exported by notebooks/vec-treeing.ipynb
+index = LatentTreeIndex.from_directory(
+    "hclust/index",
+    members_path="clusters_438/members.parquet",  # requires git-lfs pull
+    members_columns=["sequence", "uniref_id"],    # optional extra columns
+)
+
+query = "MKTFFVLLLACTIVCLLA"
+hits = index.query_sequence(
+    query,
+    model,
+    tok,
+    cfg.max_len,
+    top_k=5,
+    max_distance=0.25,
+    fetch_members=False,  # set True to return the sequences
+)
+
+for h in hits:
+    print(h.cluster_id, h.distance, h.size)
+```
+
+> **Note**
+> * Run `git lfs pull` (or download the full archives) to obtain
+>   `clusters_438/members.parquet` if you plan to fetch the sequences behind a
+>   cluster.
+> * Sequence retrieval uses `pyarrow.dataset`. Install `pyarrow` if it is not
+>   already available (`pip install pyarrow`).
+
+The same API works for batches by encoding sequences yourself and passing the
+latent vectors to `LatentTreeIndex.query_latent`.
 
 ---
 
