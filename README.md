@@ -94,7 +94,7 @@ git lfs install && git lfs pull
 
 ## Quick Start
 ```python
-from latte import Tokenizer, Config, load_vae, encode, decode
+from vae_module import Tokenizer, Config, load_vae, encode, decode
 
 cfg = Config(model_path="models/latte_epoch380.pt", max_len=512)
 tok = Tokenizer.from_esm()
