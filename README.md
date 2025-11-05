@@ -146,7 +146,7 @@ optionally return the underlying sequences) without scanning the entire 1M
 latent catalogue.
 
 ```python
-from latte import Config, Tokenizer, load_vae, LatentTreeIndex
+from vae_module import Config, Tokenizer, load_vae, LatentTreeIndex
 
 cfg = Config(model_path="models/latte_epoch380.pt", max_len=512)
 tok = Tokenizer.from_esm()
