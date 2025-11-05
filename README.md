@@ -115,7 +115,6 @@ print(new_seq)
 | λ_abs                    | FPbase        | RMSE (nm)          | **2.70**          |
 | λ_em                     | FPbase        | RMSE (nm)          | **3.80**          |
 
-t-SNE shows clean FP/non-FP separation and smooth spectral gradients across the latent manifold; k-means over FP embeddings yields 3 clusters from which decoded consensus sequences remain highly FP-like per the trained GP classifier. See Tables 3–5 and Supplementary Figures in the paper.
 
 ---
 
@@ -203,7 +202,6 @@ python geometry_compare.py   --esm_cache data/esm2_embeddings.npy   --latte_cach
 ---
 
 ## Known Limitations
-- Very long free-run decoding can drift; the surrogate reduces but does not eliminate this.  
 - Extremely remote homology can still benefit from larger PLMs/MSA-based features; use LATTE as a **recall-boosting front-end**, not a wholesale replacement for alignment.
 
 ---
