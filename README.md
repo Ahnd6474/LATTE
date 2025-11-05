@@ -1,9 +1,8 @@
 # LATTE
-**L**atent-aware **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure-informed protein VAE** with a latent-conditioned decoder.
+**L**atent-aware **A**utoregressive **T**ransformer for **T**oken **E**mbeddings — a **structure-informed protein Encoder**.
 
 > LATTE learns a **structure-aligned** 256-d latent space by matching reconstruction embeddings to ESMS/ESM-2 with a **cosine + MSE** perceptual loss, while keeping the KL **active near 0.05** to prevent collapse. It achieves **97.17%** reconstruction on UniRef50 (held-out), yields **0.987** (5-fold) FP vs non-FP accuracy and **2.70/3.80 nm** RMSE for λ_abs/λ_em with simple GP models, and provides a broader, heavier-tailed geometry than ESM-2 that improves **latent prefilter recall** for **Deep BLAST**.
-
-<p align="center">
+<p align="center
   <a href="docs/LATTE.pdf"><img src="https://img.shields.io/badge/Paper-LATTE%20(manuscript)-green.svg?style=flat-square" alt="paper"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Ahnd6474/LATTE?style=flat-square" alt="license"></a>
   <a><img src="https://img.shields.io/badge/python-3.9%2B-blue.svg?style=flat-square"></a>
@@ -33,7 +32,7 @@
 ---
 
 ## Project Overview
-LATTE is a compact (~**5.5 M** params) transformer VAE for protein sequences. Reconstructions are aligned to pretrained ESMS/ESM-2 embeddings using a **perceptual loss** (COS + MSE) in addition to CE and KL. This keeps the latent **informative** and avoids posterior collapse; the selected checkpoint (**epoch 380**) balances **Val CE = 0.072** and **KL ≈ 0.048**.
+LATTE is a compact (~**5.5 M** params) transformer encoder for protein sequences. Reconstructions are aligned to pretrained ESMS/ESM-2 embeddings using a **perceptual loss** (COS + MSE) in addition to CE and KL. This keeps the latent **informative** and avoids posterior collapse; the selected checkpoint (**epoch 380**) balances **Val CE = 0.072** and **KL ≈ 0.048**.
 
 This repo also includes **1M LATTE encoder latents** for a random UniRef50 subset to enable fast kNN/ANN lookup and to serve as a **prefilter** for **Deep BLAST**.
 
@@ -44,7 +43,7 @@ This repo also includes **1M LATTE encoder latents** for a random UniRef50 subse
   \(L_1 = \lambda(L_\text{COS}+L_\text{MSE}) + \alpha L_\text{CE} + \beta L_\text{KL}\),  
   **λ = 5**, **α** decays **30 → 0.1**, **β** warms **0 → 0.1** (first **100 epochs**).  
 - **Active latent space.** Mean KL/dim ≈ **0.04998** (RMSE **0.07027**); avoids collapse seen in the ablation without structural loss.  
-- **Compact.** ~**5.5 M** params (4-layer encoder/decoder, d=256, 4 heads, FFN=512, dropout=0.3).  
+- **Compact.** ~**5.5 M** params (4-layer encoder, d=256, 4 heads, FFN=512, dropout=0.3).  
 - **Reconstruction.** **97.17%** on held-out UniRef50 (epoch 380).  
 - **Downstream FP tasks.** 5-fold accuracy **0.987** (FP vs non-FP); λ_abs / λ_em RMSE **2.70 / 3.80 nm** with simple Gaussian processes.  
 - **Geometry.** Matched-subset pairwise cosine distances are **broader/heavier-tailed** vs ESM-2 (LATTE mean **0.1694**, SD **0.3428**; ESM-2 mean **0.0381**, SD **0.0822**), with high rank concordance (Spearman **ρ = 0.761**).  
@@ -63,8 +62,7 @@ L_1 = \lambda(L_\text{COS}+L_\text{MSE}) + \alpha L_\text{CE} + \beta L_\text{KL
 
 ## Architecture
 - **Encoder:** 4× Transformer (d_model=256, heads=4, FFN=512, dropout=0.3)  
-- **Decoder:** 4× Transformer (teacher-forced during training)  
-- **Surrogate:** lightweight transformer that maps latent **z** → decoder memory for free-run generation  
+- **Surrogate:** lightweight transformer that maps latent **z** 
 - **Total params:** ~**5.5 M**  
 <img src= "https://github.com/Ahnd6474/LATTE/blob/main/img/figure1.jpg"></img>
 ---
