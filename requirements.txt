@@ -3,6 +3,7 @@ torch
 fair-esm
 biopython
 pandas
+pyarrow
 scikit-learn
 PyYAML
 tqdm
