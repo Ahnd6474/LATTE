@@ -29,6 +29,7 @@ import argparse
 import heapq
 import json
 import time
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -143,12 +144,14 @@ def _simulate_prefilter(
 
     start = time.perf_counter()
 
+
     while heap and sequences_accumulated < capped_target:
         neg_size, node_id = heapq.heappop(heap)
         popped_nodes += 1
         node = tree[node_id]
         node_size = -neg_size
         popped_sequence_total += node_size
+
 
         if node.is_leaf or not node.children:
             sequences_accumulated += node.size
@@ -167,6 +170,7 @@ def _simulate_prefilter(
     )
     elapsed = time.perf_counter() - start
 
+
     return {
         "target_sequences": float(target_sequences),
         "effective_target": float(capped_target),
@@ -178,6 +182,7 @@ def _simulate_prefilter(
         "log_target": float(np.log(max(capped_target, 1))),
         "overshoot": overshoot,
         "elapsed_seconds": float(elapsed),
+
     }
 
 
@@ -215,6 +220,7 @@ def run_analysis(args: argparse.Namespace) -> Dict[str, object]:
     cumulative_sequence_total = float(sum(r["popped_sequence_total"] for r in results))
     cumulative_accumulated_sequences = float(sum(r["sequences_accumulated"] for r in results))
 
+
     return {
         "index_dir": str(index_dir),
         "subtree_root": int(root.node_id),
@@ -225,6 +231,7 @@ def run_analysis(args: argparse.Namespace) -> Dict[str, object]:
         "analysis_elapsed_seconds": float(analysis_elapsed),
         "cumulative_popped_sequence_total": cumulative_sequence_total,
         "cumulative_sequences_accumulated": cumulative_accumulated_sequences,
+
     }
 
 
@@ -243,6 +250,7 @@ def _print_table(results: List[Dict[str, float]]) -> None:
         "popped_sum",
         "overshoot",
         "elapsed_s",
+
     )
     print("\t".join(header))
     for row in results:
@@ -257,12 +265,14 @@ def _print_table(results: List[Dict[str, float]]) -> None:
             "popped_sequence_total",
             "overshoot",
             "elapsed_seconds",
+
         ):
             value = row[key]
             if key == "overshoot":
                 formatted.append(f"{value:.2f}")
             elif key == "elapsed_seconds":
                 formatted.append(f"{value:.3f}")
+
             else:
                 formatted.append(f"{value:.0f}")
         print("\t".join(formatted))
