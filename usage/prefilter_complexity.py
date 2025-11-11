@@ -28,6 +28,8 @@ from __future__ import annotations
 import argparse
 import heapq
 import json
+import time
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -138,12 +140,18 @@ def _simulate_prefilter(
     expanded_internal = 0
     materialised_leaves = 0
     sequences_accumulated = 0
+    popped_sequence_total = 0
+
+    start = time.perf_counter()
+
 
     while heap and sequences_accumulated < capped_target:
         neg_size, node_id = heapq.heappop(heap)
         popped_nodes += 1
         node = tree[node_id]
         node_size = -neg_size
+        popped_sequence_total += node_size
+
 
         if node.is_leaf or not node.children:
             sequences_accumulated += node.size
@@ -160,6 +168,8 @@ def _simulate_prefilter(
         if capped_target > 0
         else 0.0
     )
+    elapsed = time.perf_counter() - start
+
 
     return {
         "target_sequences": float(target_sequences),
@@ -168,8 +178,11 @@ def _simulate_prefilter(
         "expanded_internal": float(expanded_internal),
         "materialised_leaves": float(materialised_leaves),
         "sequences_accumulated": float(sequences_accumulated),
+        "popped_sequence_total": float(popped_sequence_total),
         "log_target": float(np.log(max(capped_target, 1))),
         "overshoot": overshoot,
+        "elapsed_seconds": float(elapsed),
+
     }
 
 
@@ -200,7 +213,13 @@ def run_analysis(args: argparse.Namespace) -> Dict[str, object]:
     root = subtree[args.subtree_root]
     targets = _parse_targets(args.targets, max_sequences=root.size, num_targets=args.num_targets)
 
+    analysis_start = time.perf_counter()
     results = [_simulate_prefilter(subtree, root_id=root.node_id, target_sequences=t) for t in targets]
+    analysis_elapsed = time.perf_counter() - analysis_start
+
+    cumulative_sequence_total = float(sum(r["popped_sequence_total"] for r in results))
+    cumulative_accumulated_sequences = float(sum(r["sequences_accumulated"] for r in results))
+
 
     return {
         "index_dir": str(index_dir),
@@ -209,6 +228,10 @@ def run_analysis(args: argparse.Namespace) -> Dict[str, object]:
         "root_size": int(root.size),
         "targets": targets,
         "results": results,
+        "analysis_elapsed_seconds": float(analysis_elapsed),
+        "cumulative_popped_sequence_total": cumulative_sequence_total,
+        "cumulative_sequences_accumulated": cumulative_accumulated_sequences,
+
     }
 
 
@@ -224,7 +247,10 @@ def _print_table(results: List[Dict[str, float]]) -> None:
         "expanded",
         "leaves",
         "accumulated",
+        "popped_sum",
         "overshoot",
+        "elapsed_s",
+
     )
     print("\t".join(header))
     for row in results:
@@ -236,11 +262,17 @@ def _print_table(results: List[Dict[str, float]]) -> None:
             "expanded_internal",
             "materialised_leaves",
             "sequences_accumulated",
+            "popped_sequence_total",
             "overshoot",
+            "elapsed_seconds",
+
         ):
             value = row[key]
             if key == "overshoot":
                 formatted.append(f"{value:.2f}")
+            elif key == "elapsed_seconds":
+                formatted.append(f"{value:.3f}")
+
             else:
                 formatted.append(f"{value:.0f}")
         print("\t".join(formatted))
