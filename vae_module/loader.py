@@ -28,7 +28,9 @@ logger = setup_logger(__name__)
 def load_vae(cfg: Config, vocab_size: int, pad_idx: int, bos_idx: int) -> VAEWithSurrogate:
     device = torch.device(cfg.device)
     if device.type == "cuda" and not torch.cuda.is_available():
-        raise DeviceNotAvailableError(cfg.device)
+        print('cpu')
+    else:
+        print('cuda')
 
     enc = SmallTransformer(
         vocab_size, EMB_DIM, NUM_LAYERS, NUM_HEADS, FFN_DIM, MAX_LEN, pad_idx
